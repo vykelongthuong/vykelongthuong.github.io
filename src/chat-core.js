@@ -2,6 +2,7 @@ export const STORAGE_KEYS = {
   connections: "chat.connections",
   activeConnectionId: "chat.activeConnectionId",
   streamEnabled: "chat.streamEnabled",
+  temperature: "chat.temperature",
 };
 
 export function createConnection(base, token) {
@@ -98,6 +99,12 @@ export function endpoint(base, path) {
   return `${normalized}/v1/${cleanPath}`;
 }
 
+export function normalizeTemperature(rawValue, fallback = 0.7) {
+  const parsed = Number(rawValue);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(2, Math.max(0, parsed));
+}
+
 export function buildChatRequest(model, messages, options = {}) {
   if (!model) throw new Error("Model chưa được chọn");
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -107,7 +114,7 @@ export function buildChatRequest(model, messages, options = {}) {
   return {
     model,
     messages,
-    temperature: 0.7,
+    temperature: normalizeTemperature(options.temperature, 0.7),
     stream: Boolean(options.stream),
   };
 }
@@ -245,6 +252,7 @@ export function serializeChatSession(session) {
     connectionId: session.connectionId || "",
     model: session.model || "",
     stream: Boolean(session.stream),
+    temperature: normalizeTemperature(session.temperature, 0.7),
     pinned: Boolean(session.pinned),
     messages: Array.isArray(session.messages) ? session.messages : [],
   };
@@ -275,6 +283,7 @@ export function parseChatSessionFile(rawJson) {
       typeof json.connectionId === "string" ? json.connectionId : "",
     model: typeof json.model === "string" ? json.model : "",
     stream: Boolean(json.stream),
+    temperature: normalizeTemperature(json.temperature, 0.7),
     pinned: Boolean(json.pinned),
     messages: parsed.messages,
   };

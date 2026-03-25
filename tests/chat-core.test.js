@@ -4,6 +4,7 @@ import {
   normalizeApiBase,
   endpoint,
   buildChatRequest,
+  normalizeTemperature,
   parseAssistantContent,
   buildUserMessageContent,
   groupModelsByOwner,
@@ -41,11 +42,19 @@ test("buildChatRequest returns OpenAI-compatible payload", () => {
   const payload = buildChatRequest(
     "gpt-4o-mini",
     [{ role: "user", content: "Hi" }],
-    { stream: true },
+    { stream: true, temperature: 1.2 },
   );
   assert.equal(payload.model, "gpt-4o-mini");
   assert.equal(payload.stream, true);
+  assert.equal(payload.temperature, 1.2);
   assert.equal(payload.messages.length, 1);
+});
+
+test("normalizeTemperature clamps and fallback", () => {
+  assert.equal(normalizeTemperature(1.5), 1.5);
+  assert.equal(normalizeTemperature(5), 2);
+  assert.equal(normalizeTemperature(-1), 0);
+  assert.equal(normalizeTemperature("abc", 0.9), 0.9);
 });
 
 test("parseAssistantContent reads response content", () => {
@@ -205,13 +214,16 @@ test("serializeChatSession outputs session payload", () => {
     connectionId: "http://localhost:8317",
     model: "gpt-4o",
     stream: false,
+    temperature: 1.1,
     pinned: true,
     messages: [{ role: "user", content: "Hello" }],
   });
 
   assert.equal(payload.id, "s1");
   assert.equal(payload.title, "chat 1");
+  assert.equal(payload.temperature, 1.1);
   assert.equal(payload.pinned, true);
+
   assert.equal(payload.messages.length, 1);
 });
 
@@ -220,6 +232,7 @@ test("parseChatSessionFile parses chat session file", () => {
     version: 1,
     id: "s2",
     title: "older chat",
+    temperature: 0.3,
     pinned: true,
     messages: [{ role: "user", content: "Hi" }],
   });
@@ -227,7 +240,9 @@ test("parseChatSessionFile parses chat session file", () => {
   const parsed = parseChatSessionFile(raw);
   assert.equal(parsed.id, "s2");
   assert.equal(parsed.title, "older chat");
+  assert.equal(parsed.temperature, 0.3);
   assert.equal(parsed.pinned, true);
+
   assert.equal(parsed.messages.length, 1);
 });
 

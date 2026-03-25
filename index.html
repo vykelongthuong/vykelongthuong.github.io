@@ -91,6 +91,25 @@
           </div>
         </header>
 
+        <section class="quick-controls">
+          <label for="mainConnectionSelect">API</label>
+          <select id="mainConnectionSelect"></select>
+
+          <label for="mainModelSelect">Model</label>
+          <select id="mainModelSelect"></select>
+
+          <label for="temperatureRange">Temperature</label>
+          <input
+            id="temperatureRange"
+            type="range"
+            min="0"
+            max="2"
+            step="0.1"
+            value="0.7"
+          />
+          <span id="temperatureValue">0.7</span>
+        </section>
+
         <section
           id="settingsDrawer"
           class="settings-drawer hidden"
@@ -156,7 +175,13 @@
           </div>
         </section>
 
-        <section id="messages" class="messages" aria-live="polite"></section>
+        <section id="messages" class="messages">
+          <div
+            id="messagesInner"
+            class="messages-inner"
+            aria-live="polite"
+          ></div>
+        </section>
 
         <section id="emptyHero" class="empty-hero">
           <h1 id="chatTitle">Hôm nay bạn muốn làm gì?</h1>

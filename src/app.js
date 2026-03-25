@@ -14,6 +14,7 @@ import {
   serializeChatSession,
   parseChatSessionFile,
   compactConversationMessages,
+  normalizeTemperature,
 } from "./chat-core.js";
 
 const HISTORY_DIR_NAME_KEY = "chat.historyDirName";
@@ -26,6 +27,11 @@ const apiBaseInput = document.getElementById("apiBase");
 const tokenInput = document.getElementById("apiToken");
 const connectionSelect = document.getElementById("connectionSelect");
 const quickConnectionSelect = document.getElementById("quickConnectionSelect");
+const mainConnectionSelect = document.getElementById("mainConnectionSelect");
+const mainModelSelect = document.getElementById("mainModelSelect");
+const temperatureRange = document.getElementById("temperatureRange");
+const temperatureValue = document.getElementById("temperatureValue");
+
 const removeConnectionBtn = document.getElementById("removeConnectionBtn");
 const appShell = document.querySelector(".app-shell");
 const openSettingsBtn = document.getElementById("openSettingsBtn");
@@ -62,6 +68,8 @@ const addImageFileAction = document.getElementById("addImageFileAction");
 const openProjectAction = document.getElementById("openProjectAction");
 const openSettingsAction = document.getElementById("openSettingsAction");
 const messagesEl = document.getElementById("messages");
+const messagesInnerEl = document.getElementById("messagesInner");
+
 const statusEl = document.getElementById("status");
 const sendBtn = document.getElementById("sendBtn");
 const messageTemplate = document.getElementById("messageTemplate");
@@ -128,7 +136,7 @@ function createMessageNode(role, content, imageUrl = "") {
 
 function appendMessage(role, content, imageUrl = "") {
   const node = createMessageNode(role, content, imageUrl);
-  messagesEl.appendChild(node);
+  messagesInnerEl.appendChild(node);
   messagesEl.scrollTop = messagesEl.scrollHeight;
   return node;
 }
@@ -140,8 +148,9 @@ function updateHeroVisibility() {
 }
 
 function renderMessages() {
-  messagesEl.innerHTML = "";
+  messagesInnerEl.innerHTML = "";
   const session = getActiveSession();
+
   if (!session) {
     updateHeroVisibility();
     return;
@@ -162,7 +171,7 @@ function addTypingIndicator() {
   el.className = "typing-indicator";
   el.id = "typingIndicator";
   el.textContent = "Assistant đang phản hồi...";
-  messagesEl.appendChild(el);
+  messagesInnerEl.appendChild(el);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
@@ -256,6 +265,15 @@ function updateSessionTitleFromMessage(session, text) {
   session.title = title;
 }
 
+function getTemperatureValue() {
+  return Number(temperatureRange?.value || 0.7);
+}
+
+function renderTemperatureValue() {
+  const value = getTemperatureValue();
+  temperatureValue.textContent = value.toFixed(1);
+}
+
 function createNewSession() {
   const newSession = {
     id: uid(),
@@ -265,9 +283,11 @@ function createNewSession() {
     connectionId: activeConnectionId,
     model: modelSelect.value || "",
     stream: streamToggle.checked,
+    temperature: getTemperatureValue(),
     pinned: false,
     messages: [],
   };
+
   sessions.unshift(newSession);
   activeSessionId = newSession.id;
   sortSessionsInPlace();
@@ -412,7 +432,12 @@ async function loadSessionsFromDirectory() {
     }
   }
   if (loaded.length > 0) {
-    sessions = loaded.map((s) => ({ ...s, pinned: Boolean(s.pinned) }));
+    sessions = loaded.map((s) => ({
+      ...s,
+      pinned: Boolean(s.pinned),
+      temperature: normalizeTemperature(s.temperature, 0.7),
+    }));
+
     sortSessionsInPlace();
     activeSessionId = sessions[0].id;
     renderSessionList();
@@ -434,8 +459,12 @@ function switchSession(sessionId) {
   }
   if (session.model) {
     modelSelect.value = session.model;
+    mainModelSelect.value = session.model;
   }
   streamToggle.checked = Boolean(session.stream);
+  temperatureRange.value = String(normalizeTemperature(session.temperature));
+  renderTemperatureValue();
+
   chatTitleEl.textContent = "Hôm nay bạn muốn làm gì?";
   renderSessionList();
   renderMessages();
@@ -449,6 +478,7 @@ function renderConnections() {
   const current = getCurrentConnection();
   connectionSelect.innerHTML = "";
   quickConnectionSelect.innerHTML = "";
+  mainConnectionSelect.innerHTML = "";
 
   for (const conn of connections) {
     const option = document.createElement("option");
@@ -460,11 +490,18 @@ function renderConnections() {
     quick.value = conn.id;
     quick.textContent = conn.base;
     quickConnectionSelect.appendChild(quick);
+
+    const main = document.createElement("option");
+    main.value = conn.id;
+    main.textContent = conn.base;
+    mainConnectionSelect.appendChild(main);
   }
 
   if (current) {
     connectionSelect.value = current.id;
     quickConnectionSelect.value = current.id;
+    mainConnectionSelect.value = current.id;
+
     activeConnectionLabel.textContent = `${current.base} • ${maskToken(current.token)}`;
     apiBaseInput.value = current.base;
     tokenInput.value = current.token;
@@ -506,6 +543,16 @@ function switchConnection(connectionId) {
   loadModels();
 }
 
+async function syncSessionMeta() {
+  const session = getActiveSession();
+  if (!session) return;
+  session.connectionId = activeConnectionId;
+  session.model = modelSelect.value || "";
+  session.temperature = getTemperatureValue();
+  session.updatedAt = new Date().toISOString();
+  await saveSessionToDirectory(session);
+}
+
 async function loadModels() {
   const current = getCurrentConnection();
   if (!current) return;
@@ -523,6 +570,7 @@ async function loadModels() {
       Array.isArray(data?.data) ? data.data : [],
     );
     modelSelect.innerHTML = "";
+    mainModelSelect.innerHTML = "";
     for (const g of groups) {
       const og = document.createElement("optgroup");
       og.label = g.owner;
@@ -531,8 +579,22 @@ async function loadModels() {
         op.value = m.id;
         op.textContent = m.id;
         og.appendChild(op);
+
+        const mainOp = document.createElement("option");
+        mainOp.value = m.id;
+        mainOp.textContent = `${g.owner} / ${m.id}`;
+        mainModelSelect.appendChild(mainOp);
       }
       modelSelect.appendChild(og);
+    }
+    const activeSession = getActiveSession();
+    if (activeSession?.model) {
+      modelSelect.value = activeSession.model;
+      mainModelSelect.value = activeSession.model;
+    } else if (mainModelSelect.options.length > 0) {
+      const first = mainModelSelect.options[0].value;
+      modelSelect.value = first;
+      mainModelSelect.value = first;
     }
     setStatus("Đã tải models", "success");
   } catch (err) {
@@ -628,8 +690,10 @@ async function sendMessage(e) {
     session.connectionId = activeConnectionId;
     session.model = modelSelect.value;
     session.stream = streamToggle.checked;
+    session.temperature = getTemperatureValue();
 
     appendMessage("user", text || "(image)", imageUrl);
+
     updateHeroVisibility();
     userInput.value = "";
     clearImageSelection();
@@ -640,7 +704,9 @@ async function sendMessage(e) {
     });
     const payload = buildChatRequest(modelSelect.value, compactMessages, {
       stream: streamToggle.checked,
+      temperature: session.temperature,
     });
+
     const res = await fetch(endpoint(current.base, "chat/completions"), {
       method: "POST",
       headers: {
@@ -670,6 +736,18 @@ async function sendMessage(e) {
     await saveSessionToDirectory(session);
     setStatus("Hoàn tất", "success");
   } catch (err) {
+    session.messages.pop();
+    const lastNode = messagesInnerEl.lastElementChild;
+    if (lastNode?.classList?.contains("assistant")) {
+      lastNode.remove();
+    }
+    const lastAfterAssistantRemoved = messagesInnerEl.lastElementChild;
+    if (lastAfterAssistantRemoved?.classList?.contains("user")) {
+      lastAfterAssistantRemoved.remove();
+    }
+    updateHeroVisibility();
+    session.updatedAt = new Date().toISOString();
+    await saveSessionToDirectory(session);
     setStatus(`Chat lỗi: ${err.message}`, "error");
   } finally {
     removeTypingIndicator();
@@ -686,12 +764,17 @@ function initFromCache() {
   if (!getCurrentConnection() && connections.length > 0)
     activeConnectionId = connections[0].id;
 
-  sessions = [];
-  createNewSession();
-
   streamToggle.checked =
     localStorage.getItem(STORAGE_KEYS.streamEnabled) === "true";
+  temperatureRange.value = String(
+    normalizeTemperature(localStorage.getItem(STORAGE_KEYS.temperature), 0.7),
+  );
+  renderTemperatureValue();
+
+  sessions = [];
+  createNewSession();
   renderConnections();
+
   renderSessionList();
   switchSession(activeSessionId);
   updateFolderStatus();
@@ -724,6 +807,11 @@ connectionSelect.addEventListener("change", () =>
 quickConnectionSelect.addEventListener("change", () =>
   switchConnection(quickConnectionSelect.value),
 );
+mainConnectionSelect.addEventListener("change", async () => {
+  switchConnection(mainConnectionSelect.value);
+  await syncSessionMeta();
+});
+
 streamToggle.addEventListener("change", persistStreamSetting);
 composerPlusBtn.addEventListener("click", (e) => {
   e.stopPropagation();
@@ -816,14 +904,32 @@ imageInput.addEventListener("change", async () => {
   workspaceEl?.classList.add("has-image-preview");
   messagesEl.scrollTop = messagesEl.scrollHeight;
 });
-modelSelect.addEventListener("change", () => {
+modelSelect.addEventListener("change", async () => {
   if (!activeConnectionId) return;
+  mainModelSelect.value = modelSelect.value;
   connections = updateConnectionModel(
     connections,
     activeConnectionId,
     modelSelect.value || "",
   );
   persistConnections();
+  await syncSessionMeta();
+});
+mainModelSelect.addEventListener("change", async () => {
+  if (!activeConnectionId) return;
+  modelSelect.value = mainModelSelect.value;
+  connections = updateConnectionModel(
+    connections,
+    activeConnectionId,
+    mainModelSelect.value || "",
+  );
+  persistConnections();
+  await syncSessionMeta();
+});
+temperatureRange.addEventListener("input", renderTemperatureValue);
+temperatureRange.addEventListener("change", async () => {
+  localStorage.setItem(STORAGE_KEYS.temperature, String(getTemperatureValue()));
+  await syncSessionMeta();
 });
 
 async function bootstrap() {
