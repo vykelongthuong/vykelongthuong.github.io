@@ -1,268 +1,793 @@
 <!doctype html>
-<html lang="vi">
+<html lang="vi" class="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OpenAI-Compatible Chat</title>
-    <link rel="stylesheet" href="styles.css" />
+    <title>Trình Dịch Truyện AI</title>
+    <!-- Sử dụng Tailwind CSS để làm giao diện đẹp và nhanh chóng -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Thư viện mammoth.js để đọc file .docx -->
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.7.0/mammoth.browser.min.js"></script>
+    <!-- Link to Font Awesome for icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <!-- Liên kết tới file CSS ngoài -->
+    <link rel="stylesheet" href="src/css/style.css" />
+
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
   </head>
-  <body>
-    <div class="app-shell">
-      <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-          <div class="sidebar-logo">◎ ChatGPT</div>
-          <button
-            id="sidebarToggleBtn"
-            class="icon-btn ghost"
-            type="button"
-            title="Ẩn/hiện thanh bên"
-          >
-            ▮
-          </button>
-        </div>
+        <body class="bg-slate-900 text-slate-200 transition-colors duration-300">
+    <div class="w-full max-w-[1800px] mx-auto p-2 sm:p-3 md:p-4 lg:p-5">
+      <div class="app-layout">
+        <aside class="app-sidebar w-full bg-slate-800 rounded-2xl shadow-xl p-2.5 sm:p-3 md:p-4 flex flex-col min-h-0">
 
-        <nav class="sidebar-menu">
-          <button id="newChatBtn" class="menu-item" type="button">
-            ✎ Đoạn chat mới
-          </button>
-          <button id="pickFolderBtn" class="menu-item" type="button">
-            🗂 Quản lý thư mục lịch sử
-          </button>
-          <div id="folderStatus" class="folder-status">
-            Chưa chọn thư mục lưu trữ
+                              <div class="flex items-center justify-between mb-3 gap-2">
+            <h2 class="text-sm font-semibold text-slate-100">Lịch sử lưu trữ</h2>
+                        <div class="flex items-center gap-2 shrink-0">
+              <button id="toggleStorageCompactBtn" class="px-2 py-1 text-xs bg-slate-700 text-white font-semibold rounded-md hover:bg-slate-600">Thu nhỏ node</button>
+              <button id="toggleCompletedVisibilityBtn" class="px-2 py-1 text-xs bg-emerald-700 text-white font-semibold rounded-md hover:bg-emerald-600">Ẩn truyện đã làm</button>
+              <button id="refreshStorageBtn" class="px-2 py-1 text-xs bg-sky-600 text-white font-semibold rounded-md hover:bg-sky-700">Tải lại</button>
+            </div>
           </div>
-        </nav>
 
-        <section class="sidebar-history">
-          <h4>
-            <span>Các đoạn chat của bạn</span><span class="chevron">▾</span>
-          </h4>
-          <section id="sessionList" class="session-list"></section>
-        </section>
+
+                                                                      <div class="mb-2 p-2 rounded-md border border-slate-700 bg-slate-900/40 space-y-1.5">
+                                    <div class="flex items-center justify-between gap-2">
+              <div class="text-[11px] font-medium text-slate-200">Thư mục lưu node (.json mỗi node)</div>
+              <button id="selectHistoryDirectoryBtn" class="px-2 py-1 text-[11px] bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700">Chọn thư mục</button>
+            </div>
+
+
+            <div class="flex items-center justify-between gap-2">
+              <div class="text-[11px] font-medium text-slate-200">Import history (.json cũ)</div>
+              <button id="importHistoryFileBtn" class="px-2 py-1 text-[11px] bg-slate-700 text-white font-semibold rounded-md hover:bg-slate-600">Chọn file</button>
+            </div>
+                                    <p class="text-[10px] text-slate-400 compact-help-text">Mỗi node sẽ được ghi thành 1 file JSON riêng trong thư mục đã chọn (trình duyệt hỗ trợ). Nếu không hỗ trợ, hệ thống dùng localStorage.</p>
+
+
+            <div class="text-[10px] text-slate-400 compact-help-text">
+                                          Thư mục đang dùng:
+
+
+              <span id="historyFilePathLabel" class="text-slate-200 break-all"></span>
+            </div>
+          </div>
+
+
+
+
+
+                                        <div class="mb-3 p-2 rounded-md border border-slate-700 bg-slate-900/40 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <div class="text-xs font-medium text-slate-200">Tìm kiếm / nhóm truyện</div>
+              <div id="historyResultCountLabel" class="text-[11px] text-slate-400">0 kết quả</div>
+            </div>
+            <input
+              id="historySearchNameInput"
+              type="text"
+              class="w-full px-2 py-1.5 text-xs bg-slate-800 border border-slate-600 rounded-md text-slate-100"
+              placeholder="Tìm gần đúng theo tên truyện"
+            />
+            <input
+              id="historySearchUrlInput"
+              type="text"
+              class="w-full px-2 py-1.5 text-xs bg-slate-800 border border-slate-600 rounded-md text-slate-100"
+              placeholder="Tìm đúng theo URL nguồn"
+            />
+                                    <div class="space-y-1">
+              <label for="historyGroupFilterSelect" class="text-[11px] text-slate-400">Chọn nhóm hiển thị</label>
+              <select
+                id="historyGroupFilterSelect"
+                class="w-full px-2 py-1.5 text-xs bg-slate-800 border border-slate-600 rounded-md text-slate-100"
+              >
+                <option value="">Tất cả</option>
+              </select>
+            </div>
+
+          </div>
+
+
+          <div class="mb-3 grid grid-cols-3 gap-2 text-center text-xs">
+
+            <div class="rounded-md border border-slate-700 bg-slate-900/40 p-2">
+              <div class="text-slate-400">Tổng</div>
+              <div id="historyStatsTotal" class="text-slate-100 font-semibold">0</div>
+            </div>
+            <div class="rounded-md border border-emerald-800/60 bg-emerald-900/20 p-2">
+              <div class="text-emerald-300">Đã làm</div>
+              <div id="historyStatsDone" class="text-emerald-100 font-semibold">0</div>
+            </div>
+            <div class="rounded-md border border-amber-800/60 bg-amber-900/20 p-2">
+              <div class="text-amber-300">Chưa làm</div>
+              <div id="historyStatsPending" class="text-amber-100 font-semibold">0</div>
+            </div>
+          </div>
+
+          <div id="storageRecordList" class="storage-record-list space-y-2 overflow-y-auto pr-1"></div>
+
+        </aside>
 
         <div
-          id="sessionActionMenu"
-          class="session-action-menu hidden"
-          role="menu"
-          aria-hidden="true"
+          class="app-main w-full bg-slate-800 rounded-2xl shadow-xl p-3 sm:p-4 md:p-6 lg:p-7 space-y-5"
         >
-          <button id="renameSessionBtn" type="button" role="menuitem">
-            ✎ Đổi tên
-          </button>
-          <button id="pinSessionBtn" type="button" role="menuitem">
-            📌 Ghim đoạn chat
-          </button>
-          <div class="divider"></div>
-          <button
-            id="deleteSessionBtn"
-            type="button"
-            role="menuitem"
-            class="danger"
-          >
-            🗑 Xóa
-          </button>
+
+          <div class="space-y-6">
+        <!-- Header -->
+        <div class="text-center">
+          <h1 class="text-3xl md:text-4xl font-bold text-slate-100">
+            Trình Dịch Truyện & Phụ Đề AI
+          </h1>
+          <p class="text-slate-400 mt-2">
+            Tải lên file, dán văn bản thô hoặc HTML và để AI dịch.
+          </p>
         </div>
 
-        <footer class="sidebar-footer">
-          <div class="user-box">
-            <div class="avatar">VY</div>
-            <div class="user-meta">
-              <div class="name">Vyke</div>
-              <div class="plan">Free</div>
+        <!-- Vùng cài đặt và tải lên -->
+                <div class="grid grid-cols-1 2xl:grid-cols-2 gap-3 md:gap-5">
+          <!-- Cột trái: API Key và Ngôn ngữ -->
+          <div class="panel-card space-y-4">
+
+                        <!-- Local LLM API -->
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-1">
+                <span>API Base URL</span>
+                <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="apiBaseUrlInput"
+                type="text"
+                class="block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-slate-100"
+                placeholder="Ví dụ: http://localhost:8317"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-300 mb-1">
+                <span>API Key Local LLM</span>
+                <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="apiKeyInput"
+                type="password"
+                class="block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-slate-100"
+                placeholder="Nhập API key (mặc định: hello)"
+              />
+              <p class="text-xs text-slate-400 mt-1">
+                API key và URL sẽ được lưu cục bộ trong trình duyệt.
+              </p>
+            </div>
+
+            <!-- Language and Model Select -->
+            <div class="grid grid-cols-2 gap-x-4">
+              <div>
+                <label
+                  for="language"
+                  class="block text-sm font-medium text-slate-300 mb-1"
+                  >Dịch sang</label
+                >
+                <select
+                  id="language"
+                  name="language"
+                  class="block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-slate-100"
+                >
+                  <option value="Vietnamese">Tiếng Việt</option>
+                  <option value="English">Tiếng Anh</option>
+                  <option value="Japanese">Tiếng Nhật</option>
+                  <option value="Korean">Tiếng Hàn</option>
+                  <option value="Chinese (Simplified)">Tiếng Trung</option>
+                </select>
+              </div>
+              <div>
+                <label
+                  for="modelSelect"
+                  class="block text-sm font-medium text-slate-300 mb-1"
+                  >Chọn model</label
+                >
+                <select
+                  id="modelSelect"
+                  name="modelSelect"
+                  class="block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-slate-100"
+                >
+                  <option value="">Đang tải model...</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Custom Prompt -->
+            <div id="custom-prompt-container">
+              <div class="flex items-center">
+                <input
+                  id="customPromptToggle"
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-gray-600 text-blue-600 focus:ring-blue-500 bg-slate-700"
+                />
+                <label
+                  for="customPromptToggle"
+                  class="ml-2 block text-sm font-medium text-slate-300"
+                  >Tùy chỉnh prompt (hướng dẫn thêm)</label
+                >
+              </div>
+              <textarea
+                id="customPrompt"
+                rows="4"
+                class="hidden mt-2 w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-slate-100"
+              ></textarea>
+            </div>
+                        <div id="titleSuggestionToggleContainer" class="flex items-center">
+              <input
+                id="titleSuggestionToggle"
+                type="checkbox"
+                class="h-4 w-4 rounded border-gray-600 text-sky-600 focus:ring-sky-500 bg-slate-700"
+                checked
+              />
+
+              <label
+                for="titleSuggestionToggle"
+                class="ml-2 block text-sm font-medium text-slate-300"
+                >Tự động gợi ý tên truyện sau khi dịch</label
+              >
+            </div>
+            <div>
+              <label for="storageIdInput" class="block text-sm font-medium text-slate-300 mb-1">ID lưu trữ / URL nguồn</label>
+              <input
+                id="storageIdInput"
+                type="text"
+                class="block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-slate-100"
+                placeholder="Dán URL hoặc nhập ID riêng trước khi dịch"
+              />
+              <p class="text-xs text-slate-400 mt-1">Nếu để trống, hệ thống tự tạo ID theo tên file và thời gian.</p>
+              <p id="storageIdMessage" class="text-xs text-slate-400 mt-1"></p>
+
             </div>
           </div>
-          <button class="upgrade-btn" type="button">Nâng cấp</button>
-        </footer>
-      </aside>
+                    <!-- Cột phải: Tải file lên / Dán văn bản -->
+          <div class="panel-card">
+            <div class="input-tabs mb-4">
+              <button
+                id="uploadTab"
+                class="input-tab-btn tab-active"
+              >
+                Tải File
+              </button>
+              <button
+                id="pasteTab"
+                class="input-tab-btn border-transparent text-slate-400"
+              >
+                Dán Văn Bản
+              </button>
+            </div>
 
-      <main class="workspace">
-        <header class="workspace-header">
-          <div class="chatgpt-dropdown">ChatGPT ▾</div>
-          <div></div>
-          <div class="workspace-actions">
-            <button
-              id="openSettingsBtn"
-              class="icon-btn ghost"
-              type="button"
-              title="Tùy chọn"
+
+            <!-- Upload Panel -->
+            <div id="uploadPanel">
+              <label class="block text-sm font-medium text-slate-300 mb-1">
+                <span>File truyện (.docx) hoặc phụ đề (.srt)</span>
+                <span class="text-red-500">*</span>
+              </label>
+              <label
+                for="docFile"
+                                class="custom-file-upload flex flex-col items-center justify-center w-full h-full rounded-md cursor-pointer p-6 text-center min-h-[220px] md:min-h-[178px] border-slate-600"
+
+              >
+                <svg
+                  id="uploadIcon"
+                  class="w-12 h-12 text-slate-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  ></path>
+                </svg>
+                <div class="flex items-center space-x-2 mt-2">
+                  <span id="fileName" class="text-sm text-slate-400 break-all"
+                    >Kéo và thả hoặc nhấn để chọn file</span
+                  >
+                  <button
+                    id="clearFileBtn"
+                    type="button"
+                    class="hidden p-1 bg-red-500 text-white rounded-full hover:bg-red-600 focus:outline-none"
+                  >
+                    <svg
+                      class="w-3 h-3"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                        clip-rule="evenodd"
+                      ></path>
+                    </svg>
+                  </button>
+                </div>
+              </label>
+              <input
+                type="file"
+                id="docFile"
+                class="hidden"
+                accept=".docx,.srt"
+              />
+            </div>
+
+            <!-- Paste Panel -->
+                        <div id="pastePanel" class="hidden space-y-3">
+              <label
+                for="pasteInput"
+                class="block text-sm font-medium text-slate-300 mb-1"
+              >
+                <span>Dán nội dung truyện (văn bản thô hoặc HTML)</span>
+                <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                id="pasteInput"
+                                rows="9"
+
+                class="block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-slate-100"
+                placeholder="Dán nội dung vào đây... Hệ thống sẽ tự động trích xuất văn bản từ HTML nếu được dán vào."
+              ></textarea>
+
+              <div class="rounded-md border border-slate-700 bg-slate-900/40 p-3 space-y-3">
+                <label class="inline-flex items-center gap-2 text-sm text-slate-200">
+                  <input id="manualChunkModeToggle" type="checkbox" class="h-4 w-4 rounded border-gray-600 text-blue-600 focus:ring-blue-500 bg-slate-700" />
+                  <span>Dịch theo đoạn tự dán (không tự cắt)</span>
+                </label>
+
+                <div id="manualChunkPanel" class="hidden space-y-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <p class="text-xs text-slate-400">Dán từng đoạn riêng biệt. Hệ thống sẽ phân tích bối cảnh toàn bộ rồi dịch lần lượt từng đoạn.</p>
+                    <button id="addManualChunkBtn" type="button" class="px-2 py-1 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700">+ Thêm đoạn</button>
+                  </div>
+                                    <div id="manualChunkList" class="space-y-2 max-h-[26rem] overflow-y-auto pr-1"></div>
+
+                </div>
+              </div>
+            </div>
+
+
+            <!-- Character Count Display -->
+            <div
+              id="characterCountContainer"
+              class="hidden text-sm text-slate-400 mt-2"
             >
-              ⚙
+              <span>Tổng số ký tự: </span>
+              <span id="totalCharCount" class="font-semibold text-slate-300"
+                >0</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Nút hành động và Trạng thái -->
+        <div class="flex flex-col items-center space-y-3 pt-4">
+          <div class="flex flex-wrap items-center justify-center gap-4">
+                        <button
+              id="translateBtn"
+              class="px-6 py-2 text-sm font-semibold bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors"
+              disabled
+            >
+              <span>Bắt đầu dịch</span>
+            </button>
+            <button
+              id="newTranslationBtn"
+              class="px-4 py-2 text-sm bg-slate-600 text-white font-semibold rounded-lg shadow-sm hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors"
+              type="button"
+            >
+              New
+            </button>
+            <!-- NEW: Publication Evaluation Button -->
+            <button
+              id="evaluateBtn"
+              class="hidden px-4 py-2 text-sm bg-purple-600 text-white font-semibold rounded-lg shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors flex items-center space-x-2 disabled:bg-slate-400 disabled:cursor-not-allowed"
+            >
+              <svg
+                class="w-5 h-5"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  d="M10 3.5a1.5 1.5 0 01.52 2.924A5.503 5.503 0 007.58 11H7.5a1.5 1.5 0 010-3h.082a5.503 5.503 0 002.938-5.024A1.5 1.5 0 0110 3.5z"
+                />
+                <path
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-1.5a6.5 6.5 0 110-13 6.5 6.5 0 010 13z"
+                />
+              </svg>
+              <span>Đánh giá xuất bản</span>
+            </button>
+            <button
+              id="addCommentBtn"
+              class="hidden px-4 py-2 text-sm bg-teal-600 text-white font-semibold rounded-lg shadow-sm hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-colors flex items-center space-x-2"
+            >
+              <svg
+                class="w-5 h-5"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.02-3.06A8.005 8.005 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM4.415 12.944a6.002 6.002 0 0011.17 0l.115-.345a6.002 6.002 0 00-11.4 0l.115.345z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>Thêm Comment HTML</span>
             </button>
           </div>
-        </header>
+          <div
+            id="status"
+            class="h-6 flex items-center space-x-2 text-sm text-slate-400"
+          ></div>
+          <!-- ADDED: Timer Display -->
+          <div
+            id="timerDisplay"
+            class="hidden text-sm text-cyan-400 font-mono"
+          ></div>
+        </div>
 
-        <section class="quick-controls">
-          <label for="mainConnectionSelect">API</label>
-          <select id="mainConnectionSelect"></select>
-
-          <label for="mainModelSelect">Model</label>
-          <select id="mainModelSelect"></select>
-
-          <label for="temperatureRange">Temperature</label>
-          <input
-            id="temperatureRange"
-            type="range"
-            min="0"
-            max="2"
-            step="0.1"
-            value="0.7"
-          />
-          <span id="temperatureValue">0.7</span>
-        </section>
-
-        <section
-          id="settingsDrawer"
-          class="settings-drawer hidden"
-          aria-hidden="true"
+        <!-- Detailed Status Area -->
+        <div
+          id="detailedStatusContainer"
+          class="hidden w-full bg-slate-900/50 p-4 rounded-lg border border-slate-700 space-y-2"
         >
-          <div id="settingsBackdrop" class="settings-backdrop"></div>
-          <div class="settings-dialog">
-            <div class="settings-drawer-header">
-              <h3>Cấu hình kết nối API</h3>
-              <button id="closeSettingsBtn" type="button">Đóng</button>
-            </div>
+          <!-- Status lines will be injected here by JS -->
+        </div>
 
-            <div class="connection-form">
-              <label for="apiBase">API Base URL</label>
-              <input
-                id="apiBase"
-                type="url"
-                placeholder="http://localhost:8317"
-                autocomplete="off"
-              />
-
-              <label for="apiToken">Bearer Token</label>
-              <input
-                id="apiToken"
-                type="password"
-                placeholder="sk-..."
-                autocomplete="off"
-              />
-
-              <button id="saveSettingsBtn" type="button" class="primary">
-                Lưu / Cập nhật kết nối
+        <!-- Vùng Comment đã định dạng (hiển thị trước khi dịch) -->
+        <div id="commentSection" class="hidden pt-6 border-t border-slate-700">
+          <div class="flex flex-wrap justify-between items-center gap-y-2 mb-4">
+            <div class="flex items-center gap-x-3">
+              <h3 class="text-xl font-bold text-slate-100">
+                Comment đã định dạng
+              </h3>
+              <button
+                id="toggleCommentsBtn"
+                title="Ẩn/Hiện Comments"
+                class="text-slate-400 hover:text-white"
+              >
+                <i class="fa-solid fa-eye"></i>
               </button>
             </div>
-
-            <div class="connection-list-wrap">
-              <div class="model-row">
-                <label for="connectionSelect">Kết nối đã lưu</label>
-                <button id="removeConnectionBtn" type="button">Xóa</button>
-              </div>
-              <select id="connectionSelect" size="5"></select>
-            </div>
-
-            <div class="connection-extra-row">
-              <label class="inline-control" for="quickConnectionSelect"
-                >API
-                <select id="quickConnectionSelect"></select>
-              </label>
-              <label class="inline-control" for="modelSelect"
-                >Model
-                <select id="modelSelect"></select>
-              </label>
-              <label class="inline-check" for="streamToggle">
-                <input id="streamToggle" type="checkbox" /> Stream
-              </label>
-              <button id="refreshModelsBtn" type="button">↻</button>
-            </div>
-            <div class="chat-meta-row">
-              <div id="activeConnectionLabel" class="active-connection-label">
-                Chưa chọn API
-              </div>
-              <div id="status" class="status">Sẵn sàng</div>
+            <div id="commentActions" class="hidden items-center gap-x-2">
+              <button
+                id="translateAllCommentsGoogleBtn"
+                class="px-3 py-1 text-xs bg-green-600 text-white font-semibold rounded-lg shadow-sm hover:bg-green-700 flex items-center gap-x-1.5 disabled:bg-slate-500"
+              >
+                <i class="fa-brands fa-google"></i>
+                <span>Dịch nhanh toàn bộ</span>
+              </button>
+              <button
+                id="translateAllCommentsAIBtn"
+                class="px-3 py-1 text-xs bg-indigo-600 text-white font-semibold rounded-lg shadow-sm hover:bg-indigo-700 flex items-center gap-x-1.5 disabled:bg-slate-500"
+              >
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>Dịch AI toàn bộ</span>
+              </button>
             </div>
           </div>
-        </section>
-
-        <section id="messages" class="messages">
           <div
-            id="messagesInner"
-            class="messages-inner"
-            aria-live="polite"
+            id="formattedCommentsOutput"
+            class="w-full max-h-80 overflow-y-auto bg-slate-900 p-2 rounded-md border border-slate-700"
           ></div>
-        </section>
+        </div>
 
-        <section id="emptyHero" class="empty-hero">
-          <h1 id="chatTitle">Hôm nay bạn muốn làm gì?</h1>
-        </section>
-
-        <div class="input-dock">
-          <form id="chatForm" class="composer-wrap">
-            <div id="imagePreviewWrap" class="image-preview-wrap hidden">
-              <img id="imagePreview" alt="preview" />
-              <button id="clearImageBtn" type="button">✕</button>
-            </div>
-            <div id="documentPreviewWrap" class="document-preview-wrap hidden">
-              <span id="documentPreviewName"></span>
-              <button id="clearDocumentBtn" type="button">✕</button>
-            </div>
-
-            <div class="chat-input-area">
-              <button
-                id="composerPlusBtn"
-                class="plus-circle"
-                type="button"
-                title="Mở hành động"
+        <!-- NEW: Publication Evaluation Result Area -->
+        <div
+          id="evaluationResultArea"
+          class="hidden pt-6 border-t border-slate-700"
+        >
+          <div class="flex flex-wrap justify-between items-center gap-y-2 mb-4">
+            <div class="flex items-center gap-x-3">
+              <h3
+                class="text-xl font-bold text-slate-100 flex items-center gap-x-2"
               >
-                +
+                <i class="fa-solid fa-feather-pointed text-purple-400"></i>
+                <span>Đánh giá khả năng xuất bản</span>
+              </h3>
+              <button
+                id="toggleEvaluationBtn"
+                title="Ẩn/Hiện Đánh giá"
+                class="text-slate-400 hover:text-white"
+              >
+                <i class="fa-solid fa-eye"></i>
               </button>
-              <textarea
-                id="userInput"
-                rows="1"
-                placeholder="Hỏi bất kỳ điều gì"
-              ></textarea>
-              <div class="right-actions">
-                <button id="sendBtn" class="send-btn" type="submit" title="Gửi">
-                  ➤
+            </div>
+          </div>
+          <div
+            id="evaluationOutput"
+            class="w-full max-h-[40rem] overflow-y-auto bg-slate-900 p-4 rounded-md border border-purple-800 whitespace-pre-wrap"
+          ></div>
+        </div>
+
+        <!-- Story Q&A -->
+        <div id="qaSection" class="hidden pt-6 border-t border-slate-700">
+          <div class="flex flex-wrap justify-between items-center gap-y-2 mb-4">
+            <h3
+              class="text-xl font-bold text-slate-100 flex items-center gap-x-2"
+            >
+              <i class="fa-solid fa-circle-question text-emerald-400"></i>
+              <span>Hỏi đáp về nội dung truyện</span>
+            </h3>
+          </div>
+          <div class="space-y-3">
+            <textarea
+              id="qaQuestionInput"
+              rows="3"
+              class="block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 text-slate-100"
+              placeholder="Nhập câu hỏi về nội dung truyện..."
+            ></textarea>
+            <div class="flex justify-end">
+              <button
+                id="qaAskBtn"
+                class="px-4 py-2 text-sm bg-emerald-600 text-white font-semibold rounded-lg shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed"
+                disabled
+              >
+                Hỏi đáp
+              </button>
+            </div>
+            <div
+              id="qaAnswerOutput"
+              class="w-full max-h-[32rem] overflow-y-auto bg-slate-900 p-4 rounded-md border border-emerald-800 whitespace-pre-wrap"
+            ></div>
+          </div>
+        </div>
+
+                
+
+
+        <!-- Vùng kết quả -->
+        <div id="resultArea" class="hidden pt-6 border-t border-slate-700">
+          <div
+            class="flex flex-wrap justify-between items-center gap-y-4 gap-x-2 mb-4"
+          >
+            <h2 class="text-2xl font-bold text-slate-100">Kết quả đã dịch</h2>
+            <div class="flex items-center gap-x-2 flex-wrap">
+              <button
+                id="titleSuggestionBtn"
+                class="px-3 py-1.5 text-sm bg-sky-600 text-white font-semibold rounded-lg shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors flex items-center space-x-2 disabled:bg-slate-400 disabled:cursor-not-allowed"
+              >
+                <svg
+                  class="w-5 h-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"
+                  />
+                </svg>
+                <span>Gợi ý tên truyện</span>
+              </button>
+              <button
+                id="storyDescriptionBtn"
+                class="px-3 py-1.5 text-sm bg-emerald-600 text-white font-semibold rounded-lg shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors flex items-center space-x-2 disabled:bg-slate-400 disabled:cursor-not-allowed"
+              >
+                <i class="fa-solid fa-pen-nib"></i>
+                <span>Tạo mô tả</span>
+              </button>
+                            <button
+                id="cleanTranslatedContentBtn"
+                class="px-3 py-1.5 text-sm bg-amber-600 text-white font-semibold rounded-lg shadow-sm hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
+              >
+                <span>Làm sạch bản dịch</span>
+              </button>
+                            <button
+                id="seoTagsBtn"
+                class="px-3 py-1.5 text-sm bg-fuchsia-600 text-white font-semibold rounded-lg shadow-sm hover:bg-fuchsia-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-fuchsia-500 transition-colors"
+              >
+                <span>Tạo thẻ SEO</span>
+              </button>
+              <button
+                id="storyQuizBtn"
+                class="px-3 py-1.5 text-sm bg-lime-600 text-white font-semibold rounded-lg shadow-sm hover:bg-lime-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lime-500 transition-colors"
+              >
+                <span>Tạo câu hỏi truyện</span>
+              </button>
+                            <button
+                id="copyBtn"
+                class="px-3 py-1.5 text-sm bg-slate-600 text-white font-semibold rounded-lg shadow-sm hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors"
+              >
+                <span>Sao chép bản dịch</span>
+              </button>
+              <button
+                id="saveNodeChangesBtn"
+                class="px-3 py-1.5 text-sm bg-cyan-600 text-white font-semibold rounded-lg shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-colors"
+              >
+                <span>Lưu thay đổi node</span>
+              </button>
+
+            </div>
+          </div>
+                                        <div
+            id="translatedOutput"
+            class="w-full h-96 overflow-y-auto bg-slate-900 p-4 rounded-md border border-slate-700 whitespace-pre-wrap"
+          ></div>
+
+                    <div id="cleanedOutputArea" class="hidden mt-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+              <h3 class="text-lg font-bold text-slate-100">Bản dịch đã làm sạch (không ghi đè bản gốc)</h3>
+              <button
+                id="cleanedCopyBtn"
+                class="px-3 py-1.5 text-sm bg-slate-600 text-white font-semibold rounded-lg shadow-sm hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors"
+              >
+                Sao chép bản làm sạch
+              </button>
+            </div>
+            <div
+              id="cleanedOutput"
+              class="w-full max-h-64 overflow-y-auto bg-amber-900/10 p-4 rounded-md border border-amber-900/30 whitespace-pre-wrap text-sm"
+            ></div>
+          </div>
+
+                    <div id="seoTagsArea" class="hidden mt-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <h3 class="text-xl font-bold text-slate-100">Thẻ từ khóa SEO YouTube</h3>
+              <button
+                id="seoTagsCopyBtn"
+                class="px-3 py-1.5 text-sm bg-slate-600 text-white font-semibold rounded-lg shadow-sm hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors"
+              >
+                Sao chép từ khóa
+              </button>
+            </div>
+            <div
+              id="seoTagsOutput"
+              class="w-full max-h-40 overflow-y-auto bg-fuchsia-900/10 p-4 rounded-md border border-fuchsia-900/30 whitespace-pre-wrap text-sm"
+            ></div>
+          </div>
+
+
+          <div id="storyQuizArea" class="hidden mt-6">
+            <h3 class="text-xl font-bold text-slate-100 mb-3">Câu hỏi ngắn về truyện</h3>
+            <div
+              id="storyQuizOutput"
+              class="w-full max-h-64 overflow-y-auto bg-lime-900/10 p-4 rounded-md border border-lime-900/30 whitespace-pre-wrap text-sm"
+            ></div>
+          </div>
+
+          <div id="storyMetadataArea" class="mt-6 p-4 rounded-md border border-cyan-900/40 bg-cyan-900/10 space-y-3">
+
+                        <h3 class="text-lg font-bold text-slate-100">Tạo tiêu đề chuẩn Audio + icon theo tên/thể loại</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label for="storyTitleInput" class="block text-sm font-medium text-slate-300 mb-1">Tên truyện</label>
+                <input
+                  id="storyTitleInput"
+                  type="text"
+                  class="block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 text-slate-100"
+                                    placeholder="Để trống để AI tự tạo tên truyện"
+
+                />
+              </div>
+              <div>
+                <label for="storyGenreInput" class="block text-sm font-medium text-slate-300 mb-1">Thể loại truyện</label>
+                <input
+                  id="storyGenreInput"
+                  type="text"
+                  class="block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 text-slate-100"
+                                    placeholder="Để trống để AI tự tạo thể loại"
+
+                />
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+              <button
+                id="generateStoryMetadataBtn"
+                class="px-3 py-1.5 text-sm bg-cyan-600 text-white font-semibold rounded-lg shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed"
+              >
+Tạo tiêu đề & icon
+              </button>
+              <div id="storyMetadataOutput" class="text-sm text-cyan-100"></div>
+            </div>
+          </div>
+
+          <!-- Vùng Gợi ý tên truyện -->
+
+          <div id="titleSuggestionArea" class="hidden mt-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <h3 class="text-xl font-bold text-slate-100">
+                Gợi ý tên truyện (Audio)
+              </h3>
+              <button
+                id="suggestAgainBtn"
+                class="px-3 py-1.5 text-sm bg-sky-600 text-white font-semibold rounded-lg shadow-sm hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-colors flex items-center space-x-2 disabled:bg-slate-400 disabled:cursor-not-allowed"
+              >
+                <svg
+                  class="w-5 h-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm1 14a1 1 0 011-1h5.001a5.002 5.002 0 004.087-7.926 1 1 0 111.885.666A7.002 7.002 0 015 17.899V20a1 1 0 11-2 0v-5a1 1 0 011-1z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+                <span>Gợi ý lại</span>
+              </button>
+            </div>
+            <div
+              id="titleSuggestionOutput"
+              class="w-full max-h-80 overflow-y-auto bg-sky-900/20 p-4 rounded-md border border-sky-900/30 space-y-2"
+            ></div>
+          </div>
+
+          <!-- Vùng mô tả truyện -->
+          <div id="storyDescriptionArea" class="hidden mt-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <h3 class="text-xl font-bold text-slate-100">
+                Mô tả truyện (SEO YouTube)
+              </h3>
+              <div class="flex items-center gap-2">
+                <button
+                  id="storyDescriptionCopyBtn"
+                  class="px-3 py-1.5 text-sm bg-slate-600 text-white font-semibold rounded-lg shadow-sm hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-colors"
+                >
+                  Sao chép mô tả
+                </button>
+                <button
+                  id="storyDescriptionRegenerateBtn"
+                  class="px-3 py-1.5 text-sm bg-emerald-600 text-white font-semibold rounded-lg shadow-sm hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
+                >
+                  Tạo lại
                 </button>
               </div>
             </div>
-            <input
-              id="imageInput"
-              type="file"
-              accept="image/*"
-              class="hidden"
-            />
-            <input
-              id="documentInput"
-              type="file"
-              accept=".txt,.md,.markdown,.csv,.json,.xml,.html,.htm,.log,.yaml,.yml,.ini,.conf,.docx,text/plain,text/markdown,application/json,application/xml,text/csv,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              class="hidden"
-            />
-
-            <div class="composer-disclaimer">
-              ChatGPT có thể mắc lỗi. Hãy kiểm tra thông tin quan trọng.
-              <u>Tùy chọn cookie</u>
-            </div>
-
-            <div id="composerMenu1" class="popup-menu hidden">
-              <button id="addImageFileAction" type="button">🖼 Thêm ảnh</button>
-              <button id="addDocumentFileAction" type="button">
-                📄 Thêm tài liệu
-              </button>
-
-              <button id="openProjectAction" type="button">
-                🗂 Chọn thư mục lịch sử
-              </button>
-              <button id="openSettingsAction" type="button">
-                ⚙ Mở cài đặt API
-              </button>
-            </div>
-          </form>
+            <pre
+              id="storyDescriptionOutput"
+              class="w-full max-h-[32rem] overflow-y-auto bg-emerald-900/10 p-4 rounded-md border border-emerald-900/30 whitespace-pre-wrap text-sm"
+            ></pre>
+      </div>
+          
         </div>
-      </main>
+      </div>
     </div>
 
-    <template id="messageTemplate">
-      <article class="message">
-        <div class="role"></div>
-        <div class="content"></div>
-        <img class="message-image hidden" alt="uploaded image" />
-      </article>
-    </template>
+    
 
-    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
-    <script type="module" src="src/app.js"></script>
+    <!-- Comment Modal -->
+    <div
+      id="commentModal"
+      class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4"
+    >
+      <div class="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-lg">
+        <h3 class="text-lg font-bold text-white mb-4">Dán Comment HTML</h3>
+        <p class="text-slate-400 text-sm mb-4">
+          Dán nội dung HTML có chứa các comment (ví dụ: từ Zhihu). Hệ thống sẽ
+          tự động trích xuất tên tác giả và nội dung.
+        </p>
+        <textarea
+          id="commentHtmlInput"
+          rows="10"
+          class="block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-slate-100"
+          placeholder="Dán toàn bộ mã HTML của vùng comment vào đây..."
+        ></textarea>
+        <div class="flex justify-end space-x-4 mt-6">
+          <button
+            id="commentCancelBtn"
+            class="px-4 py-2 text-sm font-semibold bg-slate-600 text-white rounded-lg hover:bg-slate-700"
+          >
+            Hủy
+          </button>
+          <button
+            id="processCommentBtn"
+            class="px-4 py-2 text-sm font-semibold bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+          >
+            Xử lý
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liên kết tới file JavaScript ngoài -->
+    <script type="module" src="src/js/app.js"></script>
   </body>
 </html>
