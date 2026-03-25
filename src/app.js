@@ -652,8 +652,28 @@ function clearDocumentSelection() {
   updateWorkspacePreviewState();
 }
 
+function htmlToPlainText(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html || "", "text/html");
+  return (doc.body?.textContent || "").trim();
+}
+
 async function readTextAttachment(file) {
   if (!file) return "";
+  const ext = String(file.name || "")
+    .toLowerCase()
+    .split(".")
+    .pop();
+
+  if (ext === "docx") {
+    if (!window.mammoth?.convertToHtml) {
+      throw new Error("Thiếu thư viện đọc DOCX (mammoth)");
+    }
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await window.mammoth.convertToHtml({ arrayBuffer });
+    return htmlToPlainText(result?.value || "");
+  }
+
   return await file.text();
 }
 
@@ -971,7 +991,8 @@ documentInput.addEventListener("change", () => {
 
   if (!isSupportedTextAttachment(file.name, file.type)) {
     setStatus(
-      "Chỉ hỗ trợ tài liệu dạng text (txt, md, csv, json, ...)",
+      "Chỉ hỗ trợ tài liệu dạng text (txt, md, csv, json, ...), docx",
+
       "error",
     );
     clearDocumentSelection();

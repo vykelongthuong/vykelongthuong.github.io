@@ -98,6 +98,13 @@ test("isSupportedTextAttachment validates file types", () => {
     isSupportedTextAttachment("data.json", "application/json"),
     true,
   );
+  assert.equal(
+    isSupportedTextAttachment(
+      "file.docx",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ),
+    true,
+  );
   assert.equal(isSupportedTextAttachment("photo.png", "image/png"), false);
 });
 

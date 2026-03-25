@@ -305,6 +305,7 @@ const SUPPORTED_TEXT_ATTACHMENT_EXTENSIONS = new Set([
   "ini",
   "conf",
   "text",
+  "docx",
 ]);
 
 export function isSupportedTextAttachment(fileName = "", mimeType = "") {
@@ -317,9 +318,12 @@ export function isSupportedTextAttachment(fileName = "", mimeType = "") {
 
   if (SUPPORTED_TEXT_ATTACHMENT_EXTENSIONS.has(ext)) return true;
 
-  return ["application/json", "application/xml", "application/x-yaml"].includes(
-    lowerType,
-  );
+  return [
+    "application/json",
+    "application/xml",
+    "application/x-yaml",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ].includes(lowerType);
 }
 
 export function buildTextAttachmentBlock(fileName, rawText, options = {}) {
