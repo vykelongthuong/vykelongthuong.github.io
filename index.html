@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenAI-Compatible Chat</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">◎ ChatGPT</div>
+          <button
+            id="sidebarToggleBtn"
+            class="icon-btn ghost"
+            type="button"
+            title="Ẩn/hiện thanh bên"
+          >
+            ▮
+          </button>
+        </div>
+
+        <nav class="sidebar-menu">
+          <button id="newChatBtn" class="menu-item" type="button">
+            ✎ Đoạn chat mới
+          </button>
+          <button id="pickFolderBtn" class="menu-item" type="button">
+            🗂 Quản lý thư mục lịch sử
+          </button>
+          <div id="folderStatus" class="folder-status">
+            Chưa chọn thư mục lưu trữ
+          </div>
+        </nav>
+
+        <section class="sidebar-history">
+          <h4>
+            <span>Các đoạn chat của bạn</span><span class="chevron">▾</span>
+          </h4>
+          <section id="sessionList" class="session-list"></section>
+        </section>
+
+        <div
+          id="sessionActionMenu"
+          class="session-action-menu hidden"
+          role="menu"
+          aria-hidden="true"
+        >
+          <button id="renameSessionBtn" type="button" role="menuitem">
+            ✎ Đổi tên
+          </button>
+          <button id="pinSessionBtn" type="button" role="menuitem">
+            📌 Ghim đoạn chat
+          </button>
+          <div class="divider"></div>
+          <button
+            id="deleteSessionBtn"
+            type="button"
+            role="menuitem"
+            class="danger"
+          >
+            🗑 Xóa
+          </button>
+        </div>
+
+        <footer class="sidebar-footer">
+          <div class="user-box">
+            <div class="avatar">VY</div>
+            <div class="user-meta">
+              <div class="name">Vyke</div>
+              <div class="plan">Free</div>
+            </div>
+          </div>
+          <button class="upgrade-btn" type="button">Nâng cấp</button>
+        </footer>
+      </aside>
+
+      <main class="workspace">
+        <header class="workspace-header">
+          <div class="chatgpt-dropdown">ChatGPT ▾</div>
+          <div></div>
+          <div class="workspace-actions">
+            <button
+              id="openSettingsBtn"
+              class="icon-btn ghost"
+              type="button"
+              title="Tùy chọn"
+            >
+              ⚙
+            </button>
+          </div>
+        </header>
+
+        <section
+          id="settingsDrawer"
+          class="settings-drawer hidden"
+          aria-hidden="true"
+        >
+          <div id="settingsBackdrop" class="settings-backdrop"></div>
+          <div class="settings-dialog">
+            <div class="settings-drawer-header">
+              <h3>Cấu hình kết nối API</h3>
+              <button id="closeSettingsBtn" type="button">Đóng</button>
+            </div>
+
+            <div class="connection-form">
+              <label for="apiBase">API Base URL</label>
+              <input
+                id="apiBase"
+                type="url"
+                placeholder="http://localhost:8317"
+                autocomplete="off"
+              />
+
+              <label for="apiToken">Bearer Token</label>
+              <input
+                id="apiToken"
+                type="password"
+                placeholder="sk-..."
+                autocomplete="off"
+              />
+
+              <button id="saveSettingsBtn" type="button" class="primary">
+                Lưu / Cập nhật kết nối
+              </button>
+            </div>
+
+            <div class="connection-list-wrap">
+              <div class="model-row">
+                <label for="connectionSelect">Kết nối đã lưu</label>
+                <button id="removeConnectionBtn" type="button">Xóa</button>
+              </div>
+              <select id="connectionSelect" size="5"></select>
+            </div>
+
+            <div class="connection-extra-row">
+              <label class="inline-control" for="quickConnectionSelect"
+                >API
+                <select id="quickConnectionSelect"></select>
+              </label>
+              <label class="inline-control" for="modelSelect"
+                >Model
+                <select id="modelSelect"></select>
+              </label>
+              <label class="inline-check" for="streamToggle">
+                <input id="streamToggle" type="checkbox" /> Stream
+              </label>
+              <button id="refreshModelsBtn" type="button">↻</button>
+            </div>
+            <div class="chat-meta-row">
+              <div id="activeConnectionLabel" class="active-connection-label">
+                Chưa chọn API
+              </div>
+              <div id="status" class="status">Sẵn sàng</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="messages" class="messages" aria-live="polite"></section>
+
+        <section id="emptyHero" class="empty-hero">
+          <h1 id="chatTitle">Hôm nay bạn muốn làm gì?</h1>
+        </section>
+
+        <div class="input-dock">
+          <form id="chatForm" class="composer-wrap">
+            <div id="imagePreviewWrap" class="image-preview-wrap hidden">
+              <img id="imagePreview" alt="preview" />
+              <button id="clearImageBtn" type="button">✕</button>
+            </div>
+
+            <div class="chat-input-area">
+              <button
+                id="composerPlusBtn"
+                class="plus-circle"
+                type="button"
+                title="Mở hành động"
+              >
+                +
+              </button>
+              <textarea
+                id="userInput"
+                rows="1"
+                placeholder="Hỏi bất kỳ điều gì"
+              ></textarea>
+              <div class="right-actions">
+                <button id="sendBtn" class="send-btn" type="submit" title="Gửi">
+                  ➤
+                </button>
+              </div>
+            </div>
+            <input
+              id="imageInput"
+              type="file"
+              accept="image/*"
+              class="hidden"
+            />
+            <div class="composer-disclaimer">
+              ChatGPT có thể mắc lỗi. Hãy kiểm tra thông tin quan trọng.
+              <u>Tùy chọn cookie</u>
+            </div>
+
+            <div id="composerMenu1" class="popup-menu hidden">
+              <button id="addImageFileAction" type="button">
+                📎 Thêm ảnh và tệp
+              </button>
+              <button id="openProjectAction" type="button">
+                🗂 Chọn thư mục lịch sử
+              </button>
+              <button id="openSettingsAction" type="button">
+                ⚙ Mở cài đặt API
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+
+    <template id="messageTemplate">
+      <article class="message">
+        <div class="role"></div>
+        <div class="content"></div>
+        <img class="message-image hidden" alt="uploaded image" />
+      </article>
+    </template>
+
+    <script type="module" src="src/app.js"></script>
+  </body>
+</html>
