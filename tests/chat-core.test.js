@@ -6,6 +6,7 @@ import {
   buildChatRequest,
   normalizeTemperature,
   parseAssistantContent,
+  renderLiteMarkdownToHtml,
   buildUserMessageContent,
   groupModelsByOwner,
   createConnection,
@@ -278,6 +279,23 @@ test("compactConversationMessages keeps original when short", () => {
   });
 
   assert.deepEqual(compacted, messages);
+});
+
+test("renderLiteMarkdownToHtml renders bold and bullet list", () => {
+  const html = renderLiteMarkdownToHtml(
+    "Phong cách: **Tối giản**\n- **Mục 1**\n- Mục 2",
+  );
+
+  assert.equal(html.includes("<strong>Tối giản</strong>"), true);
+  assert.equal(html.includes("<ul>"), true);
+  assert.equal(html.includes("<li><strong>Mục 1</strong></li>"), true);
+});
+
+test("renderLiteMarkdownToHtml escapes html", () => {
+  const html = renderLiteMarkdownToHtml("<script>alert(1)</script> **ok**");
+  assert.equal(html.includes("<script>"), false);
+  assert.equal(html.includes("&lt;script&gt;alert(1)&lt;/script&gt;"), true);
+  assert.equal(html.includes("<strong>ok</strong>"), true);
 });
 
 test("maskToken hides token", () => {

@@ -337,6 +337,72 @@ export function compactConversationMessages(messages, options = {}) {
   ];
 }
 
+function escapeHtml(raw) {
+  return String(raw)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function formatInlineMarkdown(text) {
+  const escaped = escapeHtml(text);
+  return escaped.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+}
+
+export function renderLiteMarkdownToHtml(rawText) {
+  const text = String(rawText || "");
+  if (!text.trim()) return "";
+
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+  const blocks = [];
+  let paragraphLines = [];
+  let listItems = [];
+
+  const flushParagraph = () => {
+    if (paragraphLines.length === 0) return;
+    const content = paragraphLines
+      .map((line) => formatInlineMarkdown(line))
+      .join("<br>");
+    blocks.push(`<p>${content}</p>`);
+    paragraphLines = [];
+  };
+
+  const flushList = () => {
+    if (listItems.length === 0) return;
+    const items = listItems
+      .map((item) => `<li>${formatInlineMarkdown(item)}</li>`)
+      .join("");
+    blocks.push(`<ul>${items}</ul>`);
+    listItems = [];
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    const listMatch = trimmed.match(/^[-*]\s+(.+)$/);
+    if (listMatch) {
+      flushParagraph();
+      listItems.push(listMatch[1]);
+      continue;
+    }
+
+    flushList();
+    paragraphLines.push(trimmed);
+  }
+
+  flushParagraph();
+  flushList();
+
+  return blocks.join("");
+}
+
 export function maskToken(token) {
   if (!token) return "(chưa có token)";
   if (token.length <= 8) return "********";

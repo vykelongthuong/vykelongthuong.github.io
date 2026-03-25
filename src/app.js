@@ -15,6 +15,7 @@ import {
   parseChatSessionFile,
   compactConversationMessages,
   normalizeTemperature,
+  renderLiteMarkdownToHtml,
 } from "./chat-core.js";
 
 const HISTORY_DIR_NAME_KEY = "chat.historyDirName";
@@ -121,7 +122,12 @@ function createMessageNode(role, content, imageUrl = "") {
   const node = messageTemplate.content.firstElementChild.cloneNode(true);
   node.classList.add(role);
   node.querySelector(".role").textContent = role;
-  node.querySelector(".content").textContent = content || "";
+  const contentEl = node.querySelector(".content");
+  if (role === "assistant") {
+    contentEl.innerHTML = renderLiteMarkdownToHtml(content || "");
+  } else {
+    contentEl.textContent = content || "";
+  }
   const img = node.querySelector(".message-image");
   if (imageUrl) {
     img.src = imageUrl;
@@ -649,7 +655,8 @@ async function streamAssistantResponse(response, assistantNode) {
         const delta = chunk?.choices?.[0]?.delta?.content;
         if (typeof delta === "string") {
           fullText += delta;
-          assistantNode.querySelector(".content").textContent = fullText;
+          assistantNode.querySelector(".content").innerHTML =
+            renderLiteMarkdownToHtml(fullText);
         }
       } catch {
         continue;
