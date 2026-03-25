@@ -193,6 +193,10 @@
               <img id="imagePreview" alt="preview" />
               <button id="clearImageBtn" type="button">✕</button>
             </div>
+            <div id="documentPreviewWrap" class="document-preview-wrap hidden">
+              <span id="documentPreviewName"></span>
+              <button id="clearDocumentBtn" type="button">✕</button>
+            </div>
 
             <div class="chat-input-area">
               <button
@@ -220,15 +224,24 @@
               accept="image/*"
               class="hidden"
             />
+            <input
+              id="documentInput"
+              type="file"
+              accept=".txt,.md,.markdown,.csv,.json,.xml,.html,.htm,.log,.yaml,.yml,.ini,.conf,text/plain,text/markdown,application/json,application/xml,text/csv"
+              class="hidden"
+            />
+
             <div class="composer-disclaimer">
               ChatGPT có thể mắc lỗi. Hãy kiểm tra thông tin quan trọng.
               <u>Tùy chọn cookie</u>
             </div>
 
             <div id="composerMenu1" class="popup-menu hidden">
-              <button id="addImageFileAction" type="button">
-                📎 Thêm ảnh và tệp
+              <button id="addImageFileAction" type="button">🖼 Thêm ảnh</button>
+              <button id="addDocumentFileAction" type="button">
+                📄 Thêm tài liệu
               </button>
+
               <button id="openProjectAction" type="button">
                 🗂 Chọn thư mục lịch sử
               </button>

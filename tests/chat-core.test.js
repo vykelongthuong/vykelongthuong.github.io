@@ -8,6 +8,8 @@ import {
   parseAssistantContent,
   renderLiteMarkdownToHtml,
   buildUserMessageContent,
+  isSupportedTextAttachment,
+  buildTextAttachmentBlock,
   groupModelsByOwner,
   createConnection,
   upsertConnection,
@@ -88,6 +90,25 @@ test("buildUserMessageContent supports image payload format", () => {
   assert.equal(content[0].type, "text");
   assert.equal(content[1].type, "image_url");
   assert.equal(content[1].image_url.url, "data:image/png;base64,abc");
+});
+
+test("isSupportedTextAttachment validates file types", () => {
+  assert.equal(isSupportedTextAttachment("notes.txt", "text/plain"), true);
+  assert.equal(
+    isSupportedTextAttachment("data.json", "application/json"),
+    true,
+  );
+  assert.equal(isSupportedTextAttachment("photo.png", "image/png"), false);
+});
+
+test("buildTextAttachmentBlock builds bounded content", () => {
+  const longText = "a".repeat(700);
+  const block = buildTextAttachmentBlock("a.txt", longText, {
+    maxChars: 600,
+  });
+  assert.equal(block.includes("[TÀI LIỆU ĐÍNH KÈM: a.txt]"), true);
+  assert.equal(block.includes("a".repeat(600)), true);
+  assert.equal(block.includes("đã được cắt"), true);
 });
 
 test("groupModelsByOwner groups by owned_by and sorts values", () => {

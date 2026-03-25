@@ -152,7 +152,7 @@ export function buildUserMessageContent(text, imageUrl) {
   }
 
   if (!cleanText) {
-    throw new Error("Cần nhập nội dung hoặc chọn ảnh");
+    throw new Error("Cần nhập nội dung, chọn ảnh hoặc đính kèm tài liệu");
   }
 
   return cleanText;
@@ -287,6 +287,62 @@ export function parseChatSessionFile(rawJson) {
     pinned: Boolean(json.pinned),
     messages: parsed.messages,
   };
+}
+
+const SUPPORTED_TEXT_ATTACHMENT_EXTENSIONS = new Set([
+  "txt",
+  "md",
+  "markdown",
+  "csv",
+  "json",
+  "xml",
+  "html",
+  "htm",
+  "log",
+  "rtf",
+  "yaml",
+  "yml",
+  "ini",
+  "conf",
+  "text",
+]);
+
+export function isSupportedTextAttachment(fileName = "", mimeType = "") {
+  const lowerType = String(mimeType || "").toLowerCase();
+  if (lowerType.startsWith("text/")) return true;
+
+  const lowerName = String(fileName || "").toLowerCase();
+  const ext = lowerName.includes(".") ? lowerName.split(".").pop() : "";
+  if (!ext) return false;
+
+  if (SUPPORTED_TEXT_ATTACHMENT_EXTENSIONS.has(ext)) return true;
+
+  return ["application/json", "application/xml", "application/x-yaml"].includes(
+    lowerType,
+  );
+}
+
+export function buildTextAttachmentBlock(fileName, rawText, options = {}) {
+  const safeName = (fileName || "document.txt").trim() || "document.txt";
+  const maxChars = Math.max(500, Number(options.maxChars) || 12000);
+  const text = String(rawText || "")
+    .replace(/\u0000/g, "")
+    .trim();
+  if (!text) {
+    throw new Error("Tệp tài liệu không có nội dung văn bản");
+  }
+
+  const truncated = text.slice(0, maxChars);
+  const clippedNote =
+    text.length > maxChars
+      ? `\n\n[Lưu ý: nội dung đã được cắt còn ${maxChars} ký tự để tiết kiệm dữ liệu]`
+      : "";
+
+  return (
+    `[TÀI LIỆU ĐÍNH KÈM: ${safeName}]\n` +
+    `${truncated}${clippedNote}\n` +
+    `[KẾT THÚC TÀI LIỆU]`
+  );
 }
 
 function toCompactLine(message) {

@@ -4,6 +4,8 @@ import {
   buildChatRequest,
   parseAssistantContent,
   buildUserMessageContent,
+  isSupportedTextAttachment,
+  buildTextAttachmentBlock,
   groupModelsByOwner,
   maskToken,
   parseConnections,
@@ -63,10 +65,17 @@ const imageInput = document.getElementById("imageInput");
 const clearImageBtn = document.getElementById("clearImageBtn");
 const imagePreviewWrap = document.getElementById("imagePreviewWrap");
 const imagePreview = document.getElementById("imagePreview");
+const documentInput = document.getElementById("documentInput");
+const clearDocumentBtn = document.getElementById("clearDocumentBtn");
+const documentPreviewWrap = document.getElementById("documentPreviewWrap");
+const documentPreviewName = document.getElementById("documentPreviewName");
 const composerPlusBtn = document.getElementById("composerPlusBtn");
+
 const composerMenu1 = document.getElementById("composerMenu1");
 const addImageFileAction = document.getElementById("addImageFileAction");
+const addDocumentFileAction = document.getElementById("addDocumentFileAction");
 const openProjectAction = document.getElementById("openProjectAction");
+
 const openSettingsAction = document.getElementById("openSettingsAction");
 const messagesEl = document.getElementById("messages");
 const messagesInnerEl = document.getElementById("messagesInner");
@@ -81,6 +90,7 @@ let sessions = [];
 let activeSessionId = "";
 let historyDirHandle = null;
 let activeSessionMenuId = "";
+let selectedDocumentAttachment = null;
 
 function setStatus(message, type = "") {
   statusEl.textContent = message;
@@ -621,11 +631,30 @@ async function readImageAsDataUrl(file) {
   });
 }
 
+function updateWorkspacePreviewState() {
+  const hasImage = !imagePreviewWrap.classList.contains("hidden");
+  const hasDocument = !documentPreviewWrap.classList.contains("hidden");
+  workspaceEl?.classList.toggle("has-image-preview", hasImage || hasDocument);
+}
+
 function clearImageSelection() {
   imageInput.value = "";
   imagePreview.src = "";
   imagePreviewWrap.classList.add("hidden");
-  workspaceEl?.classList.remove("has-image-preview");
+  updateWorkspacePreviewState();
+}
+
+function clearDocumentSelection() {
+  documentInput.value = "";
+  selectedDocumentAttachment = null;
+  documentPreviewName.textContent = "";
+  documentPreviewWrap.classList.add("hidden");
+  updateWorkspacePreviewState();
+}
+
+async function readTextAttachment(file) {
+  if (!file) return "";
+  return await file.text();
 }
 
 async function streamAssistantResponse(response, assistantNode) {
@@ -679,9 +708,10 @@ async function sendMessage(e) {
   }
 
   const text = userInput.value.trim();
-  const file = imageInput.files?.[0] || null;
-  if (!text && !file) {
-    setStatus("Nhập nội dung hoặc chọn ảnh", "error");
+  const imageFile = imageInput.files?.[0] || null;
+  const documentFile = selectedDocumentAttachment;
+  if (!text && !imageFile && !documentFile) {
+    setStatus("Nhập nội dung, chọn ảnh hoặc đính kèm tài liệu", "error");
     return;
   }
 
@@ -689,8 +719,17 @@ async function sendMessage(e) {
   addTypingIndicator();
 
   try {
-    const imageUrl = await readImageAsDataUrl(file);
-    const userContent = buildUserMessageContent(text, imageUrl);
+    const imageUrl = await readImageAsDataUrl(imageFile);
+    const attachmentText = documentFile
+      ? buildTextAttachmentBlock(
+          documentFile.name,
+          await readTextAttachment(documentFile),
+          { maxChars: 12000 },
+        )
+      : "";
+    const composedText = [text, attachmentText].filter(Boolean).join("\n\n");
+    const userContent = buildUserMessageContent(composedText, imageUrl);
+
     session.messages.push({ role: "user", content: userContent });
     updateSessionTitleFromMessage(session, text);
     session.updatedAt = new Date().toISOString();
@@ -699,11 +738,17 @@ async function sendMessage(e) {
     session.stream = streamToggle.checked;
     session.temperature = getTemperatureValue();
 
-    appendMessage("user", text || "(image)", imageUrl);
+    const userPreviewText =
+      [text, documentFile ? `📄 Đính kèm tài liệu: ${documentFile.name}` : ""]
+        .filter(Boolean)
+        .join("\n") || (imageUrl ? "(image)" : "(message)");
+
+    appendMessage("user", userPreviewText, imageUrl);
 
     updateHeroVisibility();
     userInput.value = "";
     clearImageSelection();
+    clearDocumentSelection();
 
     const compactMessages = compactConversationMessages(session.messages, {
       maxRecentMessages: 12,
@@ -828,6 +873,11 @@ addImageFileAction.addEventListener("click", () => {
   imageInput.click();
   composerMenu1.classList.add("hidden");
 });
+addDocumentFileAction.addEventListener("click", () => {
+  documentInput.click();
+  composerMenu1.classList.add("hidden");
+});
+
 openProjectAction.addEventListener("click", async () => {
   composerMenu1.classList.add("hidden");
   await pickHistoryFolder();
@@ -902,15 +952,38 @@ document.addEventListener("keydown", (e) => {
   }
 });
 clearImageBtn.addEventListener("click", clearImageSelection);
+clearDocumentBtn.addEventListener("click", clearDocumentSelection);
 imageInput.addEventListener("change", async () => {
   const file = imageInput.files?.[0];
   if (!file) return clearImageSelection();
   const dataUrl = await readImageAsDataUrl(file);
   imagePreview.src = dataUrl;
   imagePreviewWrap.classList.remove("hidden");
-  workspaceEl?.classList.add("has-image-preview");
+  updateWorkspacePreviewState();
   messagesEl.scrollTop = messagesEl.scrollHeight;
 });
+documentInput.addEventListener("change", () => {
+  const file = documentInput.files?.[0] || null;
+  if (!file) {
+    clearDocumentSelection();
+    return;
+  }
+
+  if (!isSupportedTextAttachment(file.name, file.type)) {
+    setStatus(
+      "Chỉ hỗ trợ tài liệu dạng text (txt, md, csv, json, ...)",
+      "error",
+    );
+    clearDocumentSelection();
+    return;
+  }
+
+  selectedDocumentAttachment = file;
+  documentPreviewName.textContent = `📄 ${file.name}`;
+  documentPreviewWrap.classList.remove("hidden");
+  updateWorkspacePreviewState();
+});
+
 modelSelect.addEventListener("change", async () => {
   if (!activeConnectionId) return;
   mainModelSelect.value = modelSelect.value;
