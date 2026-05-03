@@ -1,268 +1,510 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OpenAI-Compatible Chat</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="app-shell">
-      <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-          <div class="sidebar-logo">◎ ChatGPT</div>
-          <button
-            id="sidebarToggleBtn"
-            class="icon-btn ghost"
-            type="button"
-            title="Ẩn/hiện thanh bên"
-          >
-            ▮
-          </button>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kho Tài Liệu</title>
+  <link rel="stylesheet" href="assets/css/shared.css" />
+  <style>
+    .hub-header {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px 24px 0;
+    }
+    .hub-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .hub-topbar h1 {
+      font-size: 22px;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .hub-topbar h1 .logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+    .topbar-actions { display: flex; gap: 8px; align-items: center; }
+    .hero-hub {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 22px 24px;
+    }
+    .hero-inner {
+      background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2));
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      box-shadow: var(--shadow-md);
+    }
+    .hero-inner h2 { margin: 0 0 8px; font-size: 32px; line-height: 1.15; }
+    .hero-inner p { margin: 0; color: var(--muted); font-size: 16px; }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-val { font-size: 26px; font-weight: 900; color: var(--primary); }
+    .stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-        <nav class="sidebar-menu">
-          <button id="newChatBtn" class="menu-item" type="button">
-            ✎ Đoạn chat mới
-          </button>
-          <button id="pickFolderBtn" class="menu-item" type="button">
-            🗂 Quản lý thư mục lịch sử
-          </button>
-          <div id="folderStatus" class="folder-status">
-            Chưa chọn thư mục lưu trữ
-          </div>
-        </nav>
+    .controls {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+    .search-wrap { flex: 1 1 260px; min-width: 200px; position: relative; }
+    .search-wrap input { width: 100%; padding-left: 36px; }
+    .search-wrap .search-icon {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 15px;
+      pointer-events: none;
+    }
+    .filter-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter-group .badge { cursor: pointer; user-select: none; transition: all var(--transition); }
+    .filter-group .badge:hover { border-color: var(--primary); }
+    .sort-select select {
+      appearance: none;
+      -webkit-appearance: none;
+      background: var(--panel-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235b6478'/%3E%3C/svg%3E") no-repeat right 10px center;
+      padding-right: 30px;
+      min-width: 140px;
+    }
 
-        <section class="sidebar-history">
-          <h4>
-            <span>Các đoạn chat của bạn</span><span class="chevron">▾</span>
-          </h4>
-          <section id="sessionList" class="session-list"></section>
-        </section>
+    .docs-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px 60px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .doc-card {
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      position: relative;
+      transition: all var(--transition);
+      box-shadow: var(--shadow-sm);
+    }
+    .doc-card:hover {
+      border-color: var(--primary);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-3px);
+    }
+    .doc-card .card-top {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .doc-card .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--primary-soft);
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .doc-card .pin-btn {
+      background: transparent;
+      border: none;
+      font-size: 18px;
+      padding: 4px 6px;
+      cursor: pointer;
+      opacity: 0.3;
+      color: var(--muted);
+      z-index: 2;
+      position: relative;
+    }
+    .doc-card .pin-btn:hover,
+    .doc-card .pin-btn.pinned {
+      opacity: 1;
+      transform: scale(1.15);
+      color: var(--warning);
+      background: transparent;
+    }
+    .doc-card h3 { margin: 0 0 6px; font-size: 17px; line-height: 1.35; }
+    .doc-card .card-desc {
+      color: var(--muted);
+      font-size: 13.5px;
+      line-height: 1.5;
+      flex: 1;
+    }
+    .doc-card .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+      align-items: center;
+    }
+    .doc-card .card-meta .badge { font-size: 11px; }
+    .doc-card .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .doc-card .views { display: inline-flex; align-items: center; gap: 4px; }
+    .doc-card .open-link {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      cursor: pointer;
+      border-radius: var(--radius-lg);
+    }
 
-        <div
-          id="sessionActionMenu"
-          class="session-action-menu hidden"
-          role="menu"
-          aria-hidden="true"
-        >
-          <button id="renameSessionBtn" type="button" role="menuitem">
-            ✎ Đổi tên
-          </button>
-          <button id="pinSessionBtn" type="button" role="menuitem">
-            📌 Ghim đoạn chat
-          </button>
-          <div class="divider"></div>
-          <button
-            id="deleteSessionBtn"
-            type="button"
-            role="menuitem"
-            class="danger"
-          >
-            🗑 Xóa
-          </button>
-        </div>
+    .recent-strip {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px 20px;
+    }
+    .recent-strip h3 { font-size: 15px; margin: 0 0 10px; color: var(--muted); }
+    .recent-list { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+    .recent-item {
+      flex-shrink: 0;
+      padding: 10px 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      text-decoration: none;
+      white-space: nowrap;
+      transition: all var(--transition);
+      cursor: pointer;
+    }
+    .recent-item:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      text-decoration: none;
+    }
 
-        <footer class="sidebar-footer">
-          <div class="user-box">
-            <div class="avatar">VY</div>
-            <div class="user-meta">
-              <div class="name">Vyke</div>
-              <div class="plan">Free</div>
-            </div>
-          </div>
-          <button class="upgrade-btn" type="button">Nâng cấp</button>
-        </footer>
-      </aside>
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 48px 20px;
+    }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+    .empty-state p { color: var(--muted); font-size: 15px; }
 
-      <main class="workspace">
-        <header class="workspace-header">
-          <div class="chatgpt-dropdown">ChatGPT ▾</div>
-          <div></div>
-          <div class="workspace-actions">
-            <button
-              id="openSettingsBtn"
-              class="icon-btn ghost"
-              type="button"
-              title="Tùy chọn"
-            >
-              ⚙
-            </button>
-          </div>
-        </header>
+    .hub-footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 13px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
 
-        <section class="quick-controls">
-          <label for="mainConnectionSelect">API</label>
-          <select id="mainConnectionSelect"></select>
-
-          <label for="mainModelSelect">Model</label>
-          <select id="mainModelSelect"></select>
-
-          <label for="temperatureRange">Temperature</label>
-          <input
-            id="temperatureRange"
-            type="range"
-            min="0"
-            max="2"
-            step="0.1"
-            value="0.7"
-          />
-          <span id="temperatureValue">0.7</span>
-        </section>
-
-        <section
-          id="settingsDrawer"
-          class="settings-drawer hidden"
-          aria-hidden="true"
-        >
-          <div id="settingsBackdrop" class="settings-backdrop"></div>
-          <div class="settings-dialog">
-            <div class="settings-drawer-header">
-              <h3>Cấu hình kết nối API</h3>
-              <button id="closeSettingsBtn" type="button">Đóng</button>
-            </div>
-
-            <div class="connection-form">
-              <label for="apiBase">API Base URL</label>
-              <input
-                id="apiBase"
-                type="url"
-                placeholder="http://localhost:8317"
-                autocomplete="off"
-              />
-
-              <label for="apiToken">Bearer Token</label>
-              <input
-                id="apiToken"
-                type="password"
-                placeholder="sk-..."
-                autocomplete="off"
-              />
-
-              <button id="saveSettingsBtn" type="button" class="primary">
-                Lưu / Cập nhật kết nối
-              </button>
-            </div>
-
-            <div class="connection-list-wrap">
-              <div class="model-row">
-                <label for="connectionSelect">Kết nối đã lưu</label>
-                <button id="removeConnectionBtn" type="button">Xóa</button>
-              </div>
-              <select id="connectionSelect" size="5"></select>
-            </div>
-
-            <div class="connection-extra-row">
-              <label class="inline-control" for="quickConnectionSelect"
-                >API
-                <select id="quickConnectionSelect"></select>
-              </label>
-              <label class="inline-control" for="modelSelect"
-                >Model
-                <select id="modelSelect"></select>
-              </label>
-              <label class="inline-check" for="streamToggle">
-                <input id="streamToggle" type="checkbox" /> Stream
-              </label>
-              <button id="refreshModelsBtn" type="button">↻</button>
-            </div>
-            <div class="chat-meta-row">
-              <div id="activeConnectionLabel" class="active-connection-label">
-                Chưa chọn API
-              </div>
-              <div id="status" class="status">Sẵn sàng</div>
-            </div>
-          </div>
-        </section>
-
-        <section id="messages" class="messages">
-          <div
-            id="messagesInner"
-            class="messages-inner"
-            aria-live="polite"
-          ></div>
-        </section>
-
-        <section id="emptyHero" class="empty-hero">
-          <h1 id="chatTitle">Hôm nay bạn muốn làm gì?</h1>
-        </section>
-
-        <div class="input-dock">
-          <form id="chatForm" class="composer-wrap">
-            <div id="imagePreviewWrap" class="image-preview-wrap hidden">
-              <img id="imagePreview" alt="preview" />
-              <button id="clearImageBtn" type="button">✕</button>
-            </div>
-            <div id="documentPreviewWrap" class="document-preview-wrap hidden">
-              <span id="documentPreviewName"></span>
-              <button id="clearDocumentBtn" type="button">✕</button>
-            </div>
-
-            <div class="chat-input-area">
-              <button
-                id="composerPlusBtn"
-                class="plus-circle"
-                type="button"
-                title="Mở hành động"
-              >
-                +
-              </button>
-              <textarea
-                id="userInput"
-                rows="1"
-                placeholder="Hỏi bất kỳ điều gì"
-              ></textarea>
-              <div class="right-actions">
-                <button id="sendBtn" class="send-btn" type="submit" title="Gửi">
-                  ➤
-                </button>
-              </div>
-            </div>
-            <input
-              id="imageInput"
-              type="file"
-              accept="image/*"
-              class="hidden"
-            />
-            <input
-              id="documentInput"
-              type="file"
-              accept=".txt,.md,.markdown,.csv,.json,.xml,.html,.htm,.log,.yaml,.yml,.ini,.conf,.docx,text/plain,text/markdown,application/json,application/xml,text/csv,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              class="hidden"
-            />
-
-            <div class="composer-disclaimer">
-              ChatGPT có thể mắc lỗi. Hãy kiểm tra thông tin quan trọng.
-              <u>Tùy chọn cookie</u>
-            </div>
-
-            <div id="composerMenu1" class="popup-menu hidden">
-              <button id="addImageFileAction" type="button">🖼 Thêm ảnh</button>
-              <button id="addDocumentFileAction" type="button">
-                📄 Thêm tài liệu
-              </button>
-
-              <button id="openProjectAction" type="button">
-                🗂 Chọn thư mục lịch sử
-              </button>
-              <button id="openSettingsAction" type="button">
-                ⚙ Mở cài đặt API
-              </button>
-            </div>
-          </form>
-        </div>
-      </main>
+    @media (max-width: 640px) {
+      .hub-header { padding: 18px 16px 0; }
+      .hero-hub { padding: 16px; }
+      .hero-inner { padding: 22px; border-radius: var(--radius-lg); }
+      .hero-inner h2 { font-size: 24px; }
+      .controls { padding: 0 16px 12px; }
+      .docs-grid { padding: 0 16px 40px; grid-template-columns: 1fr; }
+      .recent-strip { padding: 0 16px 14px; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <header class="hub-header">
+    <div class="hub-topbar">
+      <h1>
+        <span class="logo">D</span>
+        Kho Tài Liệu
+      </h1>
+      <div class="topbar-actions">
+        <button id="themeBtn" type="button">Đổi theme</button>
+      </div>
     </div>
+  </header>
 
-    <template id="messageTemplate">
-      <article class="message">
-        <div class="role"></div>
-        <div class="content"></div>
-        <img class="message-image hidden" alt="uploaded image" />
-      </article>
-    </template>
+  <div class="hero-hub">
+    <div class="hero-inner">
+      <h2>Tổng hợp tài liệu cá nhân</h2>
+      <p>Nơi gom tất cả hướng dẫn, tài liệu tham khảo vào một chỗ. Tìm kiếm, lọc theo tag, ghim tài liệu hay dùng.</p>
+      <div class="stats-row" id="statsRow"></div>
+    </div>
+  </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
-    <script type="module" src="src/app.js"></script>
-  </body>
+  <div class="recent-strip hidden" id="recentStrip">
+    <h3>Mở gần đây</h3>
+    <div class="recent-list" id="recentList"></div>
+  </div>
+
+  <div class="controls">
+    <div class="search-wrap">
+      <span class="search-icon">&#128269;</span>
+      <input id="searchInput" type="search" placeholder="Tìm tài liệu..." />
+    </div>
+    <div class="filter-group" id="tagFilters"></div>
+    <div class="sort-select">
+      <select id="sortSelect">
+        <option value="pinned">Đã ghim trước</option>
+        <option value="newest">Mới cập nhật</option>
+        <option value="az">A → Z</option>
+        <option value="views">Xem nhiều</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="docs-grid" id="docsGrid"></div>
+
+  <footer class="hub-footer">
+    <p>Deploy trên <a href="https://pages.github.com/" target="_blank" rel="noopener">GitHub Pages</a>. Thêm tài liệu mới: chỉnh <code>assets/js/docs-data.js</code>.</p>
+  </footer>
+
+  <script src="assets/js/docs-data.js"></script>
+  <script src="assets/js/shared.js"></script>
+  <script>
+  (function () {
+    'use strict';
+    var Hub = window.DocHub;
+    var Store = Hub.Store;
+    var KEYS = Hub.STORAGE_KEYS;
+    var docs = window.DOCS || [];
+
+    var activeTag = null;
+    var searchQuery = '';
+    var sortMode = 'pinned';
+
+    var docsGrid = document.getElementById('docsGrid');
+    var searchInput = document.getElementById('searchInput');
+    var tagFilters = document.getElementById('tagFilters');
+    var sortSelect = document.getElementById('sortSelect');
+    var statsRow = document.getElementById('statsRow');
+    var recentStrip = document.getElementById('recentStrip');
+    var recentList = document.getElementById('recentList');
+
+    Hub.initTheme([document.getElementById('themeBtn')]);
+
+    function getPinned() { return Store.get(KEYS.pinned, []); }
+    function setPinned(arr) { Store.set(KEYS.pinned, arr); }
+    function getViews() { return Store.get(KEYS.views, {}); }
+    function addView(id) {
+      var v = getViews();
+      v[id] = (v[id] || 0) + 1;
+      Store.set(KEYS.views, v);
+    }
+    function getRecent() { return Store.get(KEYS.recent, []); }
+    function addRecent(id) {
+      var r = getRecent().filter(function (x) { return x.id !== id; });
+      r.unshift({ id: id, ts: Date.now() });
+      if (r.length > 10) r = r.slice(0, 10);
+      Store.set(KEYS.recent, r);
+    }
+
+    function togglePin(id) {
+      var pinned = getPinned();
+      if (pinned.indexOf(id) >= 0) {
+        pinned = pinned.filter(function (p) { return p !== id; });
+      } else {
+        pinned.push(id);
+      }
+      setPinned(pinned);
+      render();
+    }
+
+    function openDoc(doc) {
+      addView(doc.id);
+      addRecent(doc.id);
+      window.open(doc.file, '_blank', 'noopener');
+      setTimeout(render, 100);
+    }
+
+    var allTags = Hub.unique(docs.reduce(function (a, d) { return a.concat(d.tags || []); }, [])).sort();
+
+    function renderTags() {
+      var html = '<span class="badge' + (activeTag === null ? ' tag-active' : '') + '" data-tag="">Tất cả</span>';
+      allTags.forEach(function (tag) {
+        html += '<span class="badge' + (activeTag === tag ? ' tag-active' : '') + '" data-tag="' + Hub.escapeHtml(tag) + '">' + Hub.escapeHtml(tag) + '</span>';
+      });
+      tagFilters.innerHTML = html;
+      tagFilters.querySelectorAll('.badge').forEach(function (el) {
+        el.addEventListener('click', function () {
+          activeTag = el.dataset.tag || null;
+          render();
+        });
+      });
+    }
+
+    function getFiltered() {
+      var pinned = getPinned();
+      var views = getViews();
+      var list = docs.slice();
+
+      if (searchQuery) {
+        var q = searchQuery.toLowerCase();
+        list = list.filter(function (d) {
+          return (d.title + ' ' + d.description + ' ' + (d.tags || []).join(' ')).toLowerCase().indexOf(q) >= 0;
+        });
+      }
+      if (activeTag) {
+        list = list.filter(function (d) { return (d.tags || []).indexOf(activeTag) >= 0; });
+      }
+
+      list.sort(function (a, b) {
+        if (sortMode === 'pinned') {
+          var ap = pinned.indexOf(a.id) >= 0 ? 0 : 1;
+          var bp = pinned.indexOf(b.id) >= 0 ? 0 : 1;
+          if (ap !== bp) return ap - bp;
+          return new Date(b.updatedAt) - new Date(a.updatedAt);
+        }
+        if (sortMode === 'newest') return new Date(b.updatedAt) - new Date(a.updatedAt);
+        if (sortMode === 'az') return a.title.localeCompare(b.title, 'vi');
+        if (sortMode === 'views') return ((views[b.id] || 0) - (views[a.id] || 0));
+        return 0;
+      });
+      return list;
+    }
+
+    function renderCards() {
+      var list = getFiltered();
+      var pinned = getPinned();
+      var views = getViews();
+
+      if (list.length === 0) {
+        docsGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128196;</div><p>Không tìm thấy tài liệu phù hợp.</p></div>';
+        return;
+      }
+
+      docsGrid.innerHTML = list.map(function (doc, i) {
+        var isPinned = pinned.indexOf(doc.id) >= 0;
+        var v = views[doc.id] || 0;
+        var tagsHtml = (doc.tags || []).map(function (t) {
+          return '<span class="badge">' + Hub.escapeHtml(t) + '</span>';
+        }).join('');
+        if (doc.level) {
+          tagsHtml += '<span class="badge accent">' + Hub.escapeHtml(doc.level) + '</span>';
+        }
+        return '<div class="doc-card fade-in" style="animation-delay:' + (i * 40) + 'ms" data-id="' + Hub.escapeHtml(doc.id) + '">' +
+          '<div class="card-top">' +
+            '<div class="card-icon">&#128214;</div>' +
+            '<button type="button" class="pin-btn' + (isPinned ? ' pinned' : '') + '" data-pin="' + Hub.escapeHtml(doc.id) + '" title="' + (isPinned ? 'Bỏ ghim' : 'Ghim') + '" aria-label="' + (isPinned ? 'Bỏ ghim' : 'Ghim') + '">&#9733;</button>' +
+          '</div>' +
+          '<h3>' + Hub.escapeHtml(doc.title) + '</h3>' +
+          '<div class="card-desc">' + Hub.escapeHtml(doc.description) + '</div>' +
+          '<div class="card-meta">' + tagsHtml + '</div>' +
+          '<div class="card-footer">' +
+            '<span>' + Hub.escapeHtml(Hub.relativeTime(doc.updatedAt) || Hub.formatDateVN(doc.updatedAt)) + (doc.readingTime ? ' · ' + Hub.escapeHtml(doc.readingTime) : '') + '</span>' +
+            '<span class="views">&#128065; ' + v + '</span>' +
+          '</div>' +
+          '<a href="' + Hub.escapeHtml(doc.file) + '" target="_blank" rel="noopener" class="open-link" data-open="' + Hub.escapeHtml(doc.id) + '" aria-label="Mở ' + Hub.escapeHtml(doc.title) + '"></a>' +
+        '</div>';
+      }).join('');
+
+      docsGrid.querySelectorAll('.pin-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          togglePin(btn.dataset.pin);
+        });
+      });
+      docsGrid.querySelectorAll('.open-link').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          var doc = docs.find(function (d) { return d.id === a.dataset.open; });
+          if (doc) openDoc(doc);
+        });
+      });
+    }
+
+    function renderStats() {
+      var pinned = getPinned();
+      var views = getViews();
+      var totalViews = Object.keys(views).reduce(function (s, k) { return s + views[k]; }, 0);
+      var stats = [
+        { val: docs.length, label: 'Tài liệu' },
+        { val: allTags.length, label: 'Tag' },
+        { val: pinned.length, label: 'Đã ghim' },
+        { val: totalViews, label: 'Lượt mở' }
+      ];
+      statsRow.innerHTML = stats.map(function (s) {
+        return '<div class="stat-card"><div class="stat-val">' + s.val + '</div><div class="stat-label">' + s.label + '</div></div>';
+      }).join('');
+    }
+
+    function renderRecent() {
+      var recent = getRecent();
+      if (recent.length === 0) { recentStrip.classList.add('hidden'); return; }
+      recentStrip.classList.remove('hidden');
+      recentList.innerHTML = recent.map(function (r) {
+        var doc = docs.find(function (d) { return d.id === r.id; });
+        if (!doc) return '';
+        return '<a class="recent-item" data-recent="' + Hub.escapeHtml(doc.id) + '">' + Hub.escapeHtml(doc.title) + '</a>';
+      }).join('');
+      recentList.querySelectorAll('.recent-item').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+          e.preventDefault();
+          var doc = docs.find(function (d) { return d.id === el.dataset.recent; });
+          if (doc) openDoc(doc);
+        });
+      });
+    }
+
+    function render() {
+      renderTags();
+      renderStats();
+      renderRecent();
+      renderCards();
+    }
+
+    searchInput.addEventListener('input', Hub.debounce(function () {
+      searchQuery = searchInput.value.trim();
+      render();
+    }, 150));
+
+    sortSelect.addEventListener('change', function () {
+      sortMode = sortSelect.value;
+      render();
+    });
+
+    render();
+  })();
+  </script>
+</body>
 </html>

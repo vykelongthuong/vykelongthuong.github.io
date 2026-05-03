@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"E:/code/vykelongthuong.github.io/docs\" \"E:/code/vykelongthuong.github.io/assets/css\" \"E:/code/vykelongthuong.github.io/assets/js\")",
+      "Bash(mv \"E:/code/vykelongthuong.github.io/HUONG-DAN-SU-DUNG-ECC.html\" \"E:/code/vykelongthuong.github.io/docs/HUONG-DAN-SU-DUNG-ECC.html\")",
+      "Bash(git add *)"
+    ]
+  }
+}

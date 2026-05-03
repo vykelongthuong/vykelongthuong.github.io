@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hướng dẫn sử dụng Everything Claude Code (ECC)</title>
+  <style>
+    :root {
+      --bg: #f7f7fb;
+      --panel: #ffffff;
+      --panel-2: #f0f2f7;
+      --text: #1d2330;
+      --muted: #637083;
+      --border: #dde3ee;
+      --primary: #5b5bd6;
+      --primary-2: #4646b8;
+      --accent: #0f766e;
+      --warning: #b45309;
+      --danger: #b91c1c;
+      --code-bg: #111827;
+      --code-text: #e5e7eb;
+      --shadow: 0 12px 30px rgba(24, 32, 56, 0.08);
+    }
+
+    [data-theme="dark"] {
+      --bg: #0f1220;
+      --panel: #171b2d;
+      --panel-2: #20263a;
+      --text: #eef2ff;
+      --muted: #a7b0c6;
+      --border: #2d354d;
+      --primary: #8b8bff;
+      --primary-2: #b2b2ff;
+      --accent: #5eead4;
+      --warning: #fbbf24;
+      --danger: #f87171;
+      --code-bg: #050816;
+      --code-text: #f8fafc;
+      --shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 310px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      background: var(--panel);
+      padding: 22px 18px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 18px;
+    }
+
+    .brand h1 {
+      font-size: 20px;
+      line-height: 1.2;
+      margin: 0;
+    }
+
+    .brand p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .search-box {
+      position: relative;
+      margin: 16px 0;
+    }
+
+    .search-box input {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 12px;
+      outline: none;
+      font-size: 14px;
+    }
+
+    .search-box input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(91, 91, 214, 0.15);
+    }
+
+    .side-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    button, .button {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 9px 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    button:hover, .button:hover {
+      border-color: var(--primary);
+      color: var(--primary-2);
+      text-decoration: none;
+    }
+
+    nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    nav a {
+      display: block;
+      padding: 8px 10px;
+      border-radius: 9px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    nav a:hover, nav a.active {
+      background: var(--panel-2);
+      color: var(--primary-2);
+      text-decoration: none;
+    }
+
+    .main-wrap {
+      min-width: 0;
+    }
+
+    .progress {
+      position: sticky;
+      top: 0;
+      height: 4px;
+      background: transparent;
+      z-index: 10;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 44px 28px 80px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(91, 91, 214, 0.12), rgba(15, 118, 110, 0.10));
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 34px;
+      box-shadow: var(--shadow);
+      margin-bottom: 28px;
+    }
+
+    .hero h2 {
+      margin: 0 0 10px;
+      font-size: 38px;
+      line-height: 1.1;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .quick-start {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .quick-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .quick-card strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 28px;
+      margin: 22px 0;
+      box-shadow: var(--shadow);
+    }
+
+    section h2 {
+      margin-top: 0;
+      font-size: 28px;
+    }
+
+    section h3 {
+      margin-top: 28px;
+      font-size: 21px;
+    }
+
+    .muted { color: var(--muted); }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 6px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .card h4 {
+      margin: 0 0 8px;
+      font-size: 17px;
+    }
+
+    .card p { margin: 6px 0; }
+
+    .command-card {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      border-radius: 16px;
+      padding: 16px;
+      margin: 12px 0;
+    }
+
+    .command-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .command-name {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .when {
+      border-left: 4px solid var(--primary);
+      padding: 10px 12px;
+      background: rgba(91, 91, 214, 0.08);
+      border-radius: 10px;
+      margin: 10px 0;
+    }
+
+    .warning {
+      border-left: 4px solid var(--warning);
+      padding: 12px;
+      background: rgba(180, 83, 9, 0.09);
+      border-radius: 10px;
+      margin: 12px 0;
+    }
+
+    .danger {
+      border-left: 4px solid var(--danger);
+      padding: 12px;
+      background: rgba(185, 28, 28, 0.09);
+      border-radius: 10px;
+      margin: 12px 0;
+    }
+
+    pre {
+      position: relative;
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 16px;
+      border-radius: 14px;
+      overflow-x: auto;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 13px;
+    }
+
+    :not(pre) > code {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      padding: 2px 5px;
+      border-radius: 6px;
+      color: var(--accent);
+    }
+
+    .copy-btn {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      border-color: rgba(255,255,255,0.15);
+      padding: 6px 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      margin: 14px 0;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th { background: var(--panel-2); }
+    tr:last-child td { border-bottom: none; }
+
+    details {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel-2);
+      margin: 12px 0;
+      padding: 0;
+    }
+
+    summary {
+      cursor: pointer;
+      padding: 14px 16px;
+      font-weight: 700;
+    }
+
+    details .details-body {
+      padding: 0 16px 16px;
+    }
+
+    .workflow-step {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 14px;
+      margin: 16px 0;
+      align-items: start;
+    }
+
+    .step-num {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--primary);
+      color: white;
+      font-weight: 800;
+    }
+
+    .hidden { display: none !important; }
+
+    .mobile-topbar {
+      display: none;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 14px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      aside {
+        position: fixed;
+        z-index: 30;
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        width: 310px;
+      }
+      aside.open { transform: translateX(0); }
+      .mobile-topbar { display: flex; }
+      main { padding: 22px 16px 70px; }
+      .hero { padding: 24px; }
+      .hero h2 { font-size: 28px; }
+      .quick-start, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      section { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-topbar">
+    <button id="menuBtn">Menu</button>
+    <strong>ECC Guide</strong>
+    <button id="themeBtnMobile">Theme</button>
+  </div>
+
+  <div class="app">
+    <aside id="sidebar">
+      <div class="brand">
+        <h1>Everything Claude Code</h1>
+        <p>Hướng dẫn sử dụng chi tiết cho Claude CLI vibe coding.</p>
+      </div>
+
+      <div class="search-box">
+        <input id="searchInput" type="search" placeholder="Tìm: plan, review, hooks..." />
+      </div>
+
+      <div class="side-actions">
+        <button id="themeBtn">Đổi theme</button>
+        <button id="expandBtn">Mở tất cả</button>
+      </div>
+
+      <nav id="toc">
+        <ul>
+          <li><a href="#overview">Tổng quan</a></li>
+          <li><a href="#mental-model">Cách hoạt động</a></li>
+          <li><a href="#install">Cài đặt</a></li>
+          <li><a href="#daily">Dùng hàng ngày</a></li>
+          <li><a href="#commands">Commands chi tiết</a></li>
+          <li><a href="#workflows">Workflow mẫu</a></li>
+          <li><a href="#agents-skills">Agents & Skills</a></li>
+          <li><a href="#hooks">Hooks</a></li>
+          <li><a href="#mcp">MCP Servers</a></li>
+          <li><a href="#settings">Tinh chỉnh</a></li>
+          <li><a href="#troubleshooting">Lỗi thường gặp</a></li>
+          <li><a href="#cheatsheet">Cheatsheet</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <div class="main-wrap">
+      <div class="progress"><span id="progressBar"></span></div>
+      <main>
+        <div class="hero searchable" id="overview">
+          <h2>Hướng dẫn sử dụng ECC cho người hay quên</h2>
+          <p>File HTML này mở trực tiếp trong trình duyệt. Có tìm kiếm, copy lệnh, mở/đóng phần chi tiết, theme sáng/tối.</p>
+          <div class="quick-start">
+            <div class="quick-card">
+              <strong>Nhớ 3 lệnh vàng</strong>
+              <code>/plan</code> → code → <code>/code-review</code>
+            </div>
+            <div class="quick-card">
+              <strong>Khi build lỗi</strong>
+              Gõ <code>/build-fix</code>, để Claude tìm root cause.
+            </div>
+            <div class="quick-card">
+              <strong>Trước khi nghỉ</strong>
+              Gõ <code>/save-session</code>, hôm sau <code>/resume-session</code>.
+            </div>
+          </div>
+        </div>
+
+        <section class="searchable" id="mental-model">
+          <h2>1. ECC hoạt động thế nào?</h2>
+          <p>ECC là một bộ mở rộng cho Claude Code. Bạn vẫn dùng Claude CLI như bình thường, nhưng có thêm commands, agents, skills, hooks, rules.</p>
+
+          <div class="grid-2">
+            <div class="card">
+              <h4>Commands</h4>
+              <p>Lệnh bạn chủ động gọi, ví dụ <code>/plan</code>, <code>/code-review</code>, <code>/build-fix</code>.</p>
+            </div>
+            <div class="card">
+              <h4>Agents</h4>
+              <p>Subagent chuyên việc. Ví dụ reviewer, security reviewer, build resolver.</p>
+            </div>
+            <div class="card">
+              <h4>Skills</h4>
+              <p>Workflow và kiến thức chuyên môn. Ví dụ TDD, security review, database migration.</p>
+            </div>
+            <div class="card">
+              <h4>Hooks</h4>
+              <p>Tự chạy khi Claude dùng tool, edit file, bắt đầu/kết thúc session.</p>
+            </div>
+          </div>
+
+          <h3>Mô hình dễ nhớ</h3>
+          <pre><code>Bạn gõ yêu cầu trong Claude CLI
+        ↓
+Commands: /plan, /build-fix, /code-review
+        ↓
+Skills: Claude biết nên làm theo workflow nào
+        ↓
+Agents: Claude giao việc cho chuyên gia phù hợp
+        ↓
+Hooks + Rules: tự kiểm tra format, security, quality</code></pre>
+
+          <div class="when">
+            <strong>Nói ngắn gọn:</strong> Bạn vẫn vibe code bình thường. ECC giúp Claude có quy trình tốt hơn và tự kiểm tra nhiều hơn.
+          </div>
+        </section>
+
+        <section class="searchable" id="install">
+          <h2>2. Cài đặt</h2>
+
+          <h3>Cách khuyến nghị: cài bằng plugin</h3>
+          <p>Mở Claude CLI rồi gõ hai dòng này:</p>
+          <pre><code>/plugin marketplace add https://github.com/affaan-m/everything-claude-code
+/plugin install everything-claude-code@everything-claude-code</code></pre>
+
+          <p>Sau đó restart Claude CLI.</p>
+
+          <div class="warning">
+            <strong>Lưu ý:</strong> Nếu cài bằng plugin, nhiều lệnh có thể cần prefix <code>/everything-claude-code:</code>. Ví dụ <code>/plan</code> thành <code>/everything-claude-code:plan</code>.
+          </div>
+
+          <h3>Cách thủ công: cài từ source</h3>
+          <p>Dùng khi bạn muốn kiểm soát profile, hooks, rules, hoặc đang phát triển chính ECC.</p>
+          <pre><code>git clone https://github.com/affaan-m/everything-claude-code.git
+cd everything-claude-code
+npm install
+npx ecc-install --profile full</code></pre>
+
+          <h3>Windows PowerShell</h3>
+          <pre><code>git clone https://github.com/affaan-m/everything-claude-code.git
+cd everything-claude-code
+npm install
+.\install.ps1 --profile full --target claude</code></pre>
+
+          <h3>Kiểm tra cài đặt</h3>
+          <pre><code>node scripts/ecc.js list-installed
+node scripts/ecc.js doctor</code></pre>
+
+          <details>
+            <summary>Nên chọn profile nào?</summary>
+            <div class="details-body">
+              <table>
+                <thead><tr><th>Profile</th><th>Khi nào dùng</th><th>Đặc điểm</th></tr></thead>
+                <tbody>
+                  <tr><td><code>full</code></td><td>Muốn đầy đủ tính năng</td><td>Agents, skills, commands, hooks, rules</td></tr>
+                  <tr><td><code>minimal</code></td><td>Muốn nhẹ, ít bị can thiệp</td><td>Ít hooks hơn, phù hợp vibe code nhanh</td></tr>
+                  <tr><td><code>core</code></td><td>Muốn tùy chỉnh</td><td>Có thể loại trừ module, ví dụ không cài hooks</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+
+          <div class="danger">
+            <strong>Đừng cài chồng:</strong> Không nên dùng cả plugin install và manual install cùng lúc. Chọn một cách để tránh duplicate command/hook.
+          </div>
+        </section>
+
+        <section class="searchable" id="daily">
+          <h2>3. Dùng hàng ngày</h2>
+
+          <h3>Luồng đơn giản nhất</h3>
+          <div class="workflow-step">
+            <div class="step-num">1</div>
+            <div>
+              <h4>Trước khi làm feature: dùng <code>/plan</code></h4>
+              <pre><code>/plan Thêm chức năng đăng nhập bằng Google OAuth</code></pre>
+              <p>Claude sẽ đọc codebase, đề xuất file cần sửa, rủi ro, test cần thêm.</p>
+            </div>
+          </div>
+
+          <div class="workflow-step">
+            <div class="step-num">2</div>
+            <div>
+              <h4>Cho Claude code theo plan</h4>
+              <pre><code>Ok, triển khai theo kế hoạch đó.</code></pre>
+              <p>Trong lúc code, hooks/rules của ECC có thể tự nhắc hoặc tự kiểm tra.</p>
+            </div>
+          </div>
+
+          <div class="workflow-step">
+            <div class="step-num">3</div>
+            <div>
+              <h4>Sau khi code: dùng <code>/code-review</code></h4>
+              <pre><code>/code-review</code></pre>
+              <p>Claude kiểm tra bug, security, edge case, readability.</p>
+            </div>
+          </div>
+
+          <div class="workflow-step">
+            <div class="step-num">4</div>
+            <div>
+              <h4>Trước khi commit: dùng <code>/quality-gate</code></h4>
+              <pre><code>/quality-gate</code></pre>
+              <p>Chạy cổng chất lượng: test, lint, typecheck, review checklist tùy project.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="searchable" id="commands">
+          <h2>4. Commands chi tiết</h2>
+          <p>Mỗi command dưới đây gồm: dùng khi nào, ví dụ bạn gõ, Claude sẽ làm gì.</p>
+
+          <div class="command-card">
+            <div class="command-head">
+              <span class="command-name">/plan</span>
+              <span class="badge">dùng nhiều nhất</span>
+            </div>
+            <p><strong>Mục đích:</strong> Lập kế hoạch trước khi sửa code.</p>
+            <div class="when"><strong>Dùng khi:</strong> Feature mới, refactor, bug phức tạp, thay đổi nhiều file.</div>
+            <pre><code>/plan Thêm trang settings cho user, gồm đổi tên, đổi email, đổi mật khẩu</code></pre>
+            <p><strong>Claude sẽ:</strong> đọc cấu trúc project, tìm file liên quan, đề xuất bước làm, test cần chạy, rủi ro.</p>
+          </div>
+
+          <div class="command-card">
+            <div class="command-head">
+              <span class="command-name">/code-review</span>
+              <span class="badge">sau khi code</span>
+            </div>
+            <p><strong>Mục đích:</strong> Review code vừa thay đổi.</p>
+            <div class="when"><strong>Dùng khi:</strong> Bạn vừa để Claude code xong và muốn kiểm tra trước khi commit.</div>
+            <pre><code>/code-review</code></pre>
+            <p><strong>Claude sẽ:</strong> xem diff, tìm bug, security issue, logic sai, test thiếu, cleanup cần làm.</p>
+          </div>
+
+          <div class="command-card">
+            <div class="command-head">
+              <span class="command-name">/build-fix</span>
+              <span class="badge">khi lỗi</span>
+            </div>
+            <p><strong>Mục đích:</strong> Sửa lỗi build/test/lint.</p>
+            <div class="when"><strong>Dùng khi:</strong> Terminal báo lỗi dài, bạn không muốn đọc hết.</div>
+            <pre><code>/build-fix</code></pre>
+            <p><strong>Claude sẽ:</strong> chạy hoặc đọc lỗi build, tìm nguyên nhân gốc, sửa code, chạy lại kiểm tra.</p>
+          </div>
+
+          <div class="command-card">
+            <div class="command-head">
+              <span class="command-name">/quality-gate</span>
+              <span class="badge">trước commit</span>
+            </div>
+            <p><strong>Mục đích:</strong> Kiểm tra chất lượng tổng hợp.</p>
+            <pre><code>/quality-gate</code></pre>
+            <p><strong>Claude sẽ:</strong> kiểm tra test, lint, build, security cơ bản, docs nếu liên quan.</p>
+          </div>
+
+          <div class="command-card">
+            <div class="command-head">
+              <span class="command-name">/refactor-clean</span>
+              <span class="badge">dọn code</span>
+            </div>
+            <p><strong>Mục đích:</strong> Dọn code chết, giảm duplication, đơn giản hóa.</p>
+            <pre><code>/refactor-clean Dọn phần user profile component</code></pre>
+            <p><strong>Claude sẽ:</strong> tìm code không dùng, logic dư, abstraction thừa, rồi đề xuất/sửa gọn.</p>
+          </div>
+
+          <div class="command-card">
+            <div class="command-head">
+              <span class="command-name">/test-coverage</span>
+              <span class="badge">testing</span>
+            </div>
+            <p><strong>Mục đích:</strong> Xem thiếu test ở đâu.</p>
+            <pre><code>/test-coverage</code></pre>
+            <p><strong>Claude sẽ:</strong> chạy coverage nếu project hỗ trợ, phân tích vùng thiếu test, đề xuất test quan trọng.</p>
+          </div>
+
+          <div class="command-card">
+            <div class="command-head">
+              <span class="command-name">/save-session</span>
+              <span class="badge">ghi nhớ</span>
+            </div>
+            <p><strong>Mục đích:</strong> Lưu trạng thái phiên để hôm sau quay lại.</p>
+            <pre><code>/save-session</code></pre>
+            <p><strong>Dùng tốt nhất:</strong> trước khi tắt máy, trước khi chuyển task, sau khi debug được nửa chừng.</p>
+          </div>
+
+          <div class="command-card">
+            <div class="command-head">
+              <span class="command-name">/resume-session</span>
+              <span class="badge">tiếp tục</span>
+            </div>
+            <p><strong>Mục đích:</strong> Khôi phục phiên cũ.</p>
+            <pre><code>/resume-session</code></pre>
+            <p><strong>Claude sẽ:</strong> đọc snapshot phiên trước và tóm tắt việc đang làm.</p>
+          </div>
+
+          <details>
+            <summary>Xem thêm nhóm PRP: làm feature lớn từ yêu cầu đến PR</summary>
+            <div class="details-body">
+              <p>PRP phù hợp khi feature lớn, cần quy trình rõ ràng.</p>
+              <pre><code>/prp-prd       # Tạo tài liệu yêu cầu
+/prp-plan      # Tạo plan triển khai
+/prp-implement # Code theo plan
+/prp-commit    # Commit thay đổi
+/prp-pr        # Tạo Pull Request</code></pre>
+              <p>Ví dụ:</p>
+              <pre><code>/prp-prd Tôi muốn xây hệ thống subscription gồm free/pro/enterprise, thanh toán Stripe, giới hạn usage theo plan</code></pre>
+            </div>
+          </details>
+
+          <details>
+            <summary>Xem thêm commands theo ngôn ngữ</summary>
+            <div class="details-body">
+              <table>
+                <thead><tr><th>Ngôn ngữ</th><th>Build</th><th>Review</th><th>Test</th></tr></thead>
+                <tbody>
+                  <tr><td>Go</td><td><code>/go-build</code></td><td><code>/go-review</code></td><td><code>/go-test</code></td></tr>
+                  <tr><td>Rust</td><td><code>/rust-build</code></td><td><code>/rust-review</code></td><td><code>/rust-test</code></td></tr>
+                  <tr><td>C++</td><td><code>/cpp-build</code></td><td><code>/cpp-review</code></td><td><code>/cpp-test</code></td></tr>
+                  <tr><td>Kotlin</td><td><code>/kotlin-build</code></td><td><code>/kotlin-review</code></td><td><code>/kotlin-test</code></td></tr>
+                  <tr><td>Flutter</td><td><code>/flutter-build</code></td><td><code>/flutter-review</code></td><td><code>/flutter-test</code></td></tr>
+                  <tr><td>Python</td><td>—</td><td><code>/python-review</code></td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </section>
+
+        <section class="searchable" id="workflows">
+          <h2>5. Workflow mẫu đầy đủ</h2>
+
+          <details open>
+            <summary>Workflow A: Làm feature mới</summary>
+            <div class="details-body">
+              <pre><code># 1. Mở project
+claude
+
+# 2. Lập kế hoạch
+/plan Thêm chức năng quên mật khẩu qua email
+
+# 3. Cho Claude triển khai
+Triển khai theo plan, nhớ thêm test cho happy path và token hết hạn.
+
+# 4. Review
+/code-review
+
+# 5. Sửa vấn đề review tìm thấy
+Sửa các issue mức high và medium.
+
+# 6. Kiểm tra trước commit
+/quality-gate
+
+# 7. Lưu phiên
+/save-session</code></pre>
+            </div>
+          </details>
+
+          <details>
+            <summary>Workflow B: Debug lỗi build</summary>
+            <div class="details-body">
+              <pre><code># Khi npm test hoặc build fail
+/build-fix
+
+# Nếu Claude cần log, paste lỗi vào:
+Đây là lỗi build: &lt;paste error&gt;
+
+# Sau khi sửa
+Chạy lại test liên quan và báo kết quả.</code></pre>
+              <p>Không nên bảo Claude sửa đại. Hãy để <code>/build-fix</code> tìm root cause trước.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Workflow C: Codebase mới chưa hiểu</summary>
+            <div class="details-body">
+              <pre><code>Giải thích dự án này hoạt động thế nào, đi từ entry point đến data flow chính.
+
+Sau đó:
+/plan Tôi muốn thêm feature X vào codebase này</code></pre>
+              <p>Nếu có skill codebase-onboarding được cài, bạn có thể nói:</p>
+              <pre><code>Dùng skill codebase-onboarding để hướng dẫn tôi hiểu project này.</code></pre>
+            </div>
+          </details>
+
+          <details>
+            <summary>Workflow D: Làm việc nhiều ngày</summary>
+            <div class="details-body">
+              <pre><code># Cuối ngày
+/save-session
+
+# Sáng hôm sau
+/resume-session
+
+# Nếu có nhiều phiên
+/sessions</code></pre>
+            </div>
+          </details>
+
+          <details>
+            <summary>Workflow E: Trước khi tạo PR</summary>
+            <div class="details-body">
+              <pre><code>/code-review
+/quality-gate
+/test-coverage
+
+# Nếu mọi thứ ổn, nhờ Claude tạo commit nếu bạn muốn:
+Commit các thay đổi này với conventional commit message.</code></pre>
+              <div class="warning">Claude chỉ nên commit khi bạn yêu cầu rõ ràng.</div>
+            </div>
+          </details>
+        </section>
+
+        <section class="searchable" id="agents-skills">
+          <h2>6. Agents & Skills</h2>
+
+          <h3>Agents là gì?</h3>
+          <p>Agent là chuyên gia nhỏ mà Claude có thể gọi để làm một việc riêng. Bạn thường không cần gọi trực tiếp; command/skill sẽ dùng khi cần.</p>
+
+          <div class="grid-3">
+            <div class="card"><h4>code-reviewer</h4><p>Review bug, quality, security, performance.</p></div>
+            <div class="card"><h4>security-reviewer</h4><p>Kiểm tra OWASP, secrets, injection, auth issue.</p></div>
+            <div class="card"><h4>build-error-resolver</h4><p>Đọc lỗi build/test và sửa root cause.</p></div>
+            <div class="card"><h4>planner</h4><p>Lập plan theo phase, file cần sửa, test cần chạy.</p></div>
+            <div class="card"><h4>tdd-guide</h4><p>Hướng dẫn Red → Green → Refactor.</p></div>
+            <div class="card"><h4>e2e-runner</h4><p>Chạy kiểm thử browser bằng Playwright.</p></div>
+          </div>
+
+          <h3>Skills là gì?</h3>
+          <p>Skill là workflow hoặc kiến thức chuyên môn. Bạn có thể yêu cầu Claude dùng skill bằng câu tự nhiên.</p>
+
+          <pre><code>Dùng skill security-review để kiểm tra thay đổi hiện tại.
+Dùng skill tdd-workflow để thêm chức năng delete todo.
+Dùng skill database-migration để thiết kế migration an toàn.</code></pre>
+
+          <details>
+            <summary>Skills hữu ích cho vibe coding</summary>
+            <div class="details-body">
+              <table>
+                <thead><tr><th>Skill</th><th>Dùng khi</th></tr></thead>
+                <tbody>
+                  <tr><td><code>tdd-workflow</code></td><td>Muốn viết test trước khi code</td></tr>
+                  <tr><td><code>security-review</code></td><td>Trước khi ship code liên quan auth, payment, user input</td></tr>
+                  <tr><td><code>verification-loop</code></td><td>Muốn Claude tự sửa đến khi test pass</td></tr>
+                  <tr><td><code>santa-method</code></td><td>Muốn 2 reviewer độc lập cùng kiểm tra</td></tr>
+                  <tr><td><code>council</code></td><td>Quyết định kiến trúc mơ hồ, cần nhiều góc nhìn</td></tr>
+                  <tr><td><code>codebase-onboarding</code></td><td>Vào project mới</td></tr>
+                  <tr><td><code>e2e-testing</code></td><td>Muốn test UI bằng browser</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </section>
+
+        <section class="searchable" id="hooks">
+          <h2>7. Hooks</h2>
+          <p>Hooks tự chạy khi Claude dùng tool. Bạn không cần nhớ nhiều, chỉ cần biết vì sao đôi khi Claude bị nhắc/chặn.</p>
+
+          <table>
+            <thead><tr><th>Hook</th><th>Khi nào chạy</th><th>Tác dụng</th></tr></thead>
+            <tbody>
+              <tr><td>PreToolUse</td><td>Trước khi Claude chạy tool</td><td>Cảnh báo command nguy hiểm, bảo vệ config</td></tr>
+              <tr><td>PostToolUse</td><td>Sau khi Claude edit/chạy command</td><td>Kiểm tra quality, console.log, tích lũy thay đổi</td></tr>
+              <tr><td>Stop</td><td>Khi Claude dừng trả lời</td><td>Format/typecheck/session evaluation</td></tr>
+              <tr><td>SessionStart</td><td>Khi mở Claude</td><td>Load context dự án</td></tr>
+              <tr><td>PreCompact</td><td>Trước khi nén context</td><td>Lưu thông tin quan trọng</td></tr>
+            </tbody>
+          </table>
+
+          <h3>Nếu hooks làm phiền</h3>
+          <p>Đặt profile nhẹ hơn:</p>
+          <pre><code># Windows PowerShell
+$env:ECC_HOOK_PROFILE = "minimal"
+
+# macOS/Linux
+export ECC_HOOK_PROFILE=minimal</code></pre>
+
+          <p>Tắt hook cụ thể:</p>
+          <pre><code>export ECC_DISABLED_HOOKS="post:edit:typecheck,stop:desktop-notify"</code></pre>
+        </section>
+
+        <section class="searchable" id="mcp">
+          <h2>8. MCP Servers</h2>
+          <p>MCP là cầu nối để Claude truy cập công cụ ngoài như GitHub, Jira, Playwright, Context7, Exa, Supabase.</p>
+
+          <div class="grid-2">
+            <div class="card"><h4>github</h4><p>Làm việc với PR, issue, repo.</p></div>
+            <div class="card"><h4>context7</h4><p>Tra cứu docs mới nhất của thư viện.</p></div>
+            <div class="card"><h4>playwright</h4><p>Điều khiển browser để test UI.</p></div>
+            <div class="card"><h4>exa-web-search</h4><p>Tìm kiếm web chất lượng cao.</p></div>
+            <div class="card"><h4>supabase</h4><p>Làm việc với Supabase database.</p></div>
+            <div class="card"><h4>memory</h4><p>Lưu knowledge graph/bộ nhớ liên phiên.</p></div>
+          </div>
+
+          <div class="warning">
+            Nên bật dưới 10 MCP server cùng lúc để không tốn context window.
+          </div>
+        </section>
+
+        <section class="searchable" id="settings">
+          <h2>9. Tinh chỉnh</h2>
+
+          <h3>Biến môi trường hay dùng</h3>
+          <table>
+            <thead><tr><th>Biến</th><th>Giá trị</th><th>Tác dụng</th></tr></thead>
+            <tbody>
+              <tr><td><code>ECC_HOOK_PROFILE</code></td><td><code>minimal</code>/<code>standard</code>/<code>strict</code></td><td>Độ nghiêm hooks</td></tr>
+              <tr><td><code>ECC_DISABLED_HOOKS</code></td><td>Danh sách hook</td><td>Tắt hook cụ thể</td></tr>
+              <tr><td><code>ECC_GATEGUARD</code></td><td><code>off</code></td><td>Tắt GateGuard</td></tr>
+              <tr><td><code>ECC_SESSION_START_CONTEXT</code></td><td><code>off</code></td><td>Tắt auto-load context đầu phiên</td></tr>
+              <tr><td><code>ECC_SESSION_START_MAX_CHARS</code></td><td>Số ký tự</td><td>Giới hạn context đầu phiên</td></tr>
+              <tr><td><code>CLAUDE_PACKAGE_MANAGER</code></td><td><code>npm</code>/<code>pnpm</code>/<code>yarn</code>/<code>bun</code></td><td>Ép package manager</td></tr>
+            </tbody>
+          </table>
+
+          <h3>Set vĩnh viễn trên Windows</h3>
+          <pre><code>[Environment]::SetEnvironmentVariable("ECC_HOOK_PROFILE", "minimal", "User")
+[Environment]::SetEnvironmentVariable("ECC_GATEGUARD", "off", "User")</code></pre>
+
+          <h3>Set vĩnh viễn trên macOS/Linux</h3>
+          <pre><code>echo 'export ECC_HOOK_PROFILE=minimal' >> ~/.zshrc
+echo 'export ECC_GATEGUARD=off' >> ~/.zshrc</code></pre>
+        </section>
+
+        <section class="searchable" id="troubleshooting">
+          <h2>10. Lỗi thường gặp</h2>
+
+          <details open>
+            <summary>Tôi gõ /plan nhưng không thấy lệnh</summary>
+            <div class="details-body">
+              <p>Nếu cài bằng plugin, thử prefix đầy đủ:</p>
+              <pre><code>/everything-claude-code:plan Thêm chức năng login</code></pre>
+              <p>Kiểm tra plugin:</p>
+              <pre><code>/plugin list everything-claude-code@everything-claude-code</code></pre>
+            </div>
+          </details>
+
+          <details>
+            <summary>Claude bị chặn không cho sửa file</summary>
+            <div class="details-body">
+              <p>Có thể là GateGuard yêu cầu điều tra trước. Đây là hành vi bảo vệ chất lượng. Nếu muốn tắt:</p>
+              <pre><code>export ECC_GATEGUARD=off</code></pre>
+            </div>
+          </details>
+
+          <details>
+            <summary>Hooks chạy quá chậm</summary>
+            <div class="details-body">
+              <pre><code>export ECC_HOOK_PROFILE=minimal</code></pre>
+              <p>Hoặc cài lại profile minimal.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Cài đặt bị hỏng hoặc thiếu file</summary>
+            <div class="details-body">
+              <pre><code>node scripts/ecc.js doctor
+node scripts/ecc.js repair --dry-run
+node scripts/ecc.js repair</code></pre>
+            </div>
+          </details>
+
+          <details>
+            <summary>Muốn gỡ cài đặt</summary>
+            <div class="details-body">
+              <pre><code>node scripts/uninstall.js --dry-run
+node scripts/uninstall.js</code></pre>
+            </div>
+          </details>
+        </section>
+
+        <section class="searchable" id="cheatsheet">
+          <h2>11. Cheatsheet</h2>
+
+          <h3>Nhớ ít nhất các lệnh này</h3>
+          <pre><code>/plan &lt;yêu cầu&gt;        # Lập kế hoạch trước khi code
+/code-review           # Review sau khi code
+/build-fix             # Sửa build/test fail
+/quality-gate          # Kiểm tra trước commit
+/save-session          # Lưu phiên
+/resume-session        # Khôi phục phiên</code></pre>
+
+          <h3>Câu mẫu copy dùng luôn</h3>
+          <pre><code>/plan Tôi muốn thêm chức năng [mô tả feature]. Hãy đọc codebase, đề xuất file cần sửa, test cần thêm, và rủi ro.
+
+/code-review Review toàn bộ thay đổi hiện tại. Ưu tiên bug, security, edge cases, test thiếu.
+
+/build-fix Build/test đang fail. Hãy tìm root cause, sửa tối thiểu, và chạy lại kiểm tra.
+
+/quality-gate Kiểm tra thay đổi hiện tại đã đủ chất lượng để commit chưa.
+
+/save-session Lưu lại trạng thái hiện tại, gồm việc đã làm, việc còn lại, file quan trọng, test đã chạy.</code></pre>
+
+          <h3>Quy tắc nhớ nhanh</h3>
+          <div class="grid-2">
+            <div class="card"><h4>Feature mới</h4><p><code>/plan</code> → triển khai → <code>/code-review</code> → <code>/quality-gate</code></p></div>
+            <div class="card"><h4>Lỗi build</h4><p><code>/build-fix</code>, không sửa đại.</p></div>
+            <div class="card"><h4>Cuối ngày</h4><p><code>/save-session</code></p></div>
+            <div class="card"><h4>Sáng hôm sau</h4><p><code>/resume-session</code></p></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const root = document.documentElement;
+    const sidebar = document.getElementById('sidebar');
+    const searchInput = document.getElementById('searchInput');
+    const progressBar = document.getElementById('progressBar');
+    const themeButtons = [document.getElementById('themeBtn'), document.getElementById('themeBtnMobile')];
+    const expandBtn = document.getElementById('expandBtn');
+    const menuBtn = document.getElementById('menuBtn');
+
+    const savedTheme = localStorage.getItem('ecc-guide-theme');
+    if (savedTheme) document.body.dataset.theme = savedTheme;
+
+    themeButtons.forEach((btn) => btn && btn.addEventListener('click', () => {
+      const next = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.body.dataset.theme = next;
+      localStorage.setItem('ecc-guide-theme', next);
+    }));
+
+    menuBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
+    document.querySelectorAll('nav a').forEach((a) => {
+      a.addEventListener('click', () => sidebar.classList.remove('open'));
+    });
+
+    document.querySelectorAll('pre').forEach((pre) => {
+      const btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', async () => {
+        const text = pre.querySelector('code')?.innerText || pre.innerText;
+        await navigator.clipboard.writeText(text);
+        btn.textContent = 'Copied';
+        setTimeout(() => btn.textContent = 'Copy', 1200);
+      });
+      pre.appendChild(btn);
+    });
+
+    expandBtn.addEventListener('click', () => {
+      const details = [...document.querySelectorAll('details')];
+      const shouldOpen = details.some((d) => !d.open);
+      details.forEach((d) => d.open = shouldOpen);
+      expandBtn.textContent = shouldOpen ? 'Đóng tất cả' : 'Mở tất cả';
+    });
+
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.trim().toLowerCase();
+      document.querySelectorAll('.searchable').forEach((el) => {
+        const match = !q || el.innerText.toLowerCase().includes(q);
+        el.classList.toggle('hidden', !match);
+      });
+    });
+
+    window.addEventListener('scroll', () => {
+      const doc = document.documentElement;
+      const max = doc.scrollHeight - doc.clientHeight;
+      const pct = max <= 0 ? 0 : (doc.scrollTop / max) * 100;
+      progressBar.style.width = pct + '%';
+
+      let current = '';
+      document.querySelectorAll('section[id], .hero[id]').forEach((section) => {
+        const top = section.getBoundingClientRect().top;
+        if (top <= 120) current = section.id;
+      });
+      document.querySelectorAll('nav a').forEach((a) => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+      });
+    });
+  </script>
+</body>
+</html>
