@@ -6,23 +6,157 @@
     <title>Công cụ Lọc Tài Khoản & Mật Khẩu</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Custom scrollbar for better look */
-        textarea::-webkit-scrollbar {
-            width: 8px;
+        :root {
+            --bg: #f8fafc;
+            --panel: #ffffff;
+            --panel-2: #f1f5f9;
+            --panel-soft: #f8fafc;
+            --text: #1e293b;
+            --text-strong: #0f172a;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --border-strong: #cbd5e1;
+            --primary: #4f46e5;
+            --primary-2: #4338ca;
+            --accent-emerald-bg: #ecfdf5;
+            --accent-emerald-border: #d1fae5;
+            --accent-emerald-text: #047857;
+            --accent-emerald-strong: #064e3b;
+            --accent-rose-bg: #fff1f2;
+            --accent-rose-border: #ffe4e6;
+            --accent-rose-text: #be123c;
+            --accent-rose-strong: #881337;
+            --scroll-track: #f1f5f9;
+            --scroll-thumb: #cbd5e1;
+            --scroll-thumb-hover: #94a3b8;
         }
+
+        body[data-theme="dark"] {
+            --bg: #0f1220;
+            --panel: #171b2d;
+            --panel-2: #20263a;
+            --panel-soft: #1b2036;
+            --text: #eef2ff;
+            --text-strong: #ffffff;
+            --muted: #a7b0c6;
+            --border: #2d354d;
+            --border-strong: #3a4566;
+            --primary: #8b8bff;
+            --primary-2: #b2b2ff;
+            --accent-emerald-bg: rgba(16, 185, 129, 0.12);
+            --accent-emerald-border: rgba(16, 185, 129, 0.35);
+            --accent-emerald-text: #6ee7b7;
+            --accent-emerald-strong: #a7f3d0;
+            --accent-rose-bg: rgba(244, 63, 94, 0.12);
+            --accent-rose-border: rgba(244, 63, 94, 0.35);
+            --accent-rose-text: #fda4af;
+            --accent-rose-strong: #fecdd3;
+            --scroll-track: #20263a;
+            --scroll-thumb: #3a4566;
+            --scroll-thumb-hover: #4a5680;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            transition: background-color .25s ease, color .25s ease;
+        }
+
+        textarea::-webkit-scrollbar { width: 8px; }
         textarea::-webkit-scrollbar-track {
-            background: #f1f5f9; 
+            background: var(--scroll-track);
             border-radius: 4px;
         }
         textarea::-webkit-scrollbar-thumb {
-            background: #cbd5e1; 
+            background: var(--scroll-thumb);
             border-radius: 4px;
         }
-        textarea::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8; 
+        textarea::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); }
+
+        .bg-white { background-color: var(--panel) !important; }
+        .bg-slate-50 { background-color: var(--bg) !important; }
+        body .border-slate-100,
+        body .border-slate-200 { border-color: var(--border) !important; }
+
+        #input-data {
+            background-color: var(--panel-soft) !important;
+            border-color: var(--border) !important;
+            color: var(--text) !important;
         }
-        
-        /* Toast animation */
+        #input-data::placeholder { color: var(--muted) !important; opacity: 1; }
+
+        body .text-slate-800,
+        body .text-slate-900 { color: var(--text-strong) !important; }
+        body .text-slate-500,
+        body .text-slate-400,
+        body .text-slate-600 { color: var(--muted) !important; }
+        body .text-slate-200 { color: var(--border-strong) !important; }
+
+        body[data-theme="dark"] #input-count {
+            background-color: var(--panel-2) !important;
+            color: var(--muted) !important;
+        }
+        body[data-theme="dark"] .bg-blue-100 { background-color: rgba(139, 139, 255, 0.18) !important; }
+        body[data-theme="dark"] .text-blue-600,
+        body[data-theme="dark"] .text-indigo-600 { color: var(--primary-2) !important; }
+
+        .result-card {
+            background-color: var(--panel) !important;
+            border-color: var(--border) !important;
+        }
+        .result-card .field-user {
+            background-color: var(--accent-emerald-bg) !important;
+            border-color: var(--accent-emerald-border) !important;
+        }
+        .result-card .field-pass {
+            background-color: var(--accent-rose-bg) !important;
+            border-color: var(--accent-rose-border) !important;
+        }
+        .result-card .label-user { color: var(--accent-emerald-text) !important; }
+        .result-card .label-pass { color: var(--accent-rose-text) !important; }
+        .result-card .value-user { color: var(--accent-emerald-strong) !important; }
+        .result-card .value-pass { color: var(--accent-rose-strong) !important; }
+        .result-card .btn-copy-user {
+            background-color: var(--panel) !important;
+            border-color: var(--accent-emerald-border) !important;
+            color: var(--accent-emerald-text) !important;
+        }
+        .result-card .btn-copy-pass {
+            background-color: var(--panel) !important;
+            border-color: var(--accent-rose-border) !important;
+            color: var(--accent-rose-text) !important;
+        }
+        body[data-theme="dark"] .result-card .status-pill {
+            background-color: var(--panel-2) !important;
+            color: var(--muted) !important;
+        }
+        body[data-theme="dark"] .result-card .status-divider { border-color: var(--border) !important; }
+        body[data-theme="dark"] .result-card.is-done {
+            background-color: rgba(16, 185, 129, 0.10) !important;
+            border-color: rgba(16, 185, 129, 0.45) !important;
+        }
+        body[data-theme="dark"] .result-card.is-done .status-pill {
+            background-color: #10b981 !important;
+            color: #052e1f !important;
+        }
+        body[data-theme="dark"] .result-card.is-done .status-text-done { color: #6ee7b7 !important; }
+
+        .theme-toggle {
+            border: 1px solid var(--border);
+            background: var(--panel-2);
+            color: var(--text);
+            border-radius: 10px;
+            padding: 8px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all .2s ease;
+        }
+        .theme-toggle:hover {
+            border-color: var(--primary);
+            color: var(--primary-2);
+        }
+
         @keyframes slideInUp {
             from { transform: translateY(100%); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
@@ -31,28 +165,27 @@
             from { opacity: 1; }
             to { opacity: 0; }
         }
-        .toast-enter {
-            animation: slideInUp 0.3s ease-out forwards;
-        }
-        .toast-exit {
-            animation: fadeOut 0.3s ease-out forwards;
-        }
+        .toast-enter { animation: slideInUp 0.3s ease-out forwards; }
+        .toast-exit { animation: fadeOut 0.3s ease-out forwards; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-800 font-sans p-4 md:p-8">
 
     <div class="max-w-6xl mx-auto space-y-6">
         <!-- Header -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
-            <div class="bg-blue-100 text-blue-600 p-3 rounded-xl">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                </svg>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex items-center gap-4">
+                <div class="bg-blue-100 text-blue-600 p-3 rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900">Trình Lọc Dữ Liệu Tài Khoản</h1>
+                    <p class="text-slate-500 text-sm mt-1">Tự động trích xuất Tên tài khoản và Mật khẩu từ chuỗi dữ liệu phức tạp.</p>
+                </div>
             </div>
-            <div>
-                <h1 class="text-2xl font-bold text-slate-900">Trình Lọc Dữ Liệu Tài Khoản</h1>
-                <p class="text-slate-500 text-sm mt-1">Tự động trích xuất Tên tài khoản và Mật khẩu từ chuỗi dữ liệu phức tạp.</p>
-            </div>
+            <button id="themeBtn" type="button" class="theme-toggle">Đổi theme</button>
         </div>
 
         <!-- Main Content -->
