@@ -244,6 +244,24 @@
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
 
     <script>
+        // ========== THEME ==========
+        (function() {
+            var stored = localStorage.getItem('ecc-guide-theme');
+            if (stored === 'dark') {
+                document.body.setAttribute('data-theme', 'dark');
+            }
+            var btn = document.getElementById('themeBtn');
+            if (btn) {
+                btn.addEventListener('click', function() {
+                    var isDark = document.body.getAttribute('data-theme') === 'dark';
+                    var next = isDark ? 'light' : 'dark';
+                    document.body.setAttribute('data-theme', next);
+                    localStorage.setItem('ecc-guide-theme', next);
+                });
+            }
+        })();
+
+        // ========== ACCOUNT FILTER LOGIC ==========
         // Global variables for convenience
         let currentProcessedData = [];
         const inputData = document.getElementById('input-data');
