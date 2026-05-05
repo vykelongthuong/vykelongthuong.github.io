@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Công cụ Lọc Tài Khoản & Mật Khẩu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom scrollbar for better look */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        
+        /* Toast animation */
+        @keyframes slideInUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .toast-enter {
+            animation: slideInUp 0.3s ease-out forwards;
+        }
+        .toast-exit {
+            animation: fadeOut 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+        <!-- Header -->
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4">
+            <div class="bg-blue-100 text-blue-600 p-3 rounded-xl">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900">Trình Lọc Dữ Liệu Tài Khoản</h1>
+                <p class="text-slate-500 text-sm mt-1">Tự động trích xuất Tên tài khoản và Mật khẩu từ chuỗi dữ liệu phức tạp.</p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Input Section -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="font-semibold text-lg flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Dữ liệu gốc (Dán vào đây)
+                    </h2>
+                    <span id="input-count" class="text-xs font-medium bg-slate-100 text-slate-600 py-1 px-2 rounded-lg">0 dòng</span>
+                </div>
+                <textarea id="input-data" 
+                    class="w-full flex-grow min-h-[400px] p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm font-mono leading-relaxed transition-all" 
+                    placeholder="Ví dụ:&#10;rohankochewaf@hotmail.com|DNjBpsj1K2|M.C554_BAY...&#10;user2@email.com|Pass123|DataRác..."></textarea>
+                <div class="mt-3 text-xs text-slate-400 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Hệ thống tự động xử lý ngay khi bạn dán dữ liệu.
+                </div>
+            </div>
+
+            <!-- Output Section -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col lg:h-[calc(100vh-12rem)] min-h-[500px]">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3 shrink-0">
+                    <h2 class="font-semibold text-lg text-slate-800 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        Danh sách Kết quả
+                    </h2>
+                    <button onclick="copyAllFormatted()" id="btn-copy-all" class="w-full sm:w-auto text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2 active:scale-95">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Sao chép tất cả (User|Pass)
+                    </button>
+                </div>
+                
+                <div id="output-list" class="flex-grow overflow-y-auto space-y-3 pr-2">
+                    <div class="text-center text-slate-400 py-10 text-sm flex flex-col items-center gap-2">
+                        <svg class="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+                        Chưa có dữ liệu. Hãy dán dữ liệu vào ô bên trái.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+    <script>
+        // Global variables for convenience
+        let currentProcessedData = [];
+        const inputData = document.getElementById('input-data');
+        const inputCount = document.getElementById('input-count');
+        const outputList = document.getElementById('output-list');
+
+        // Event Listener for automatic processing
+        inputData.addEventListener('input', processData);
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
+        function processData() {
+            const rawText = inputData.value;
+            const lines = rawText.split('\n');
+            
+            outputList.innerHTML = '';
+            currentProcessedData = [];
+            let validCount = 0;
+
+            if (rawText.trim() === '') {
+                outputList.innerHTML = `
+                    <div class="text-center text-slate-400 py-10 text-sm flex flex-col items-center gap-2">
+                        <svg class="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+                        Chưa có dữ liệu. Hãy dán dữ liệu vào ô bên trái.
+                    </div>`;
+                inputCount.textContent = "0 dòng";
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+
+            lines.forEach(line => {
+                const cleanLine = line.trim();
+                if (!cleanLine) return;
+
+                const parts = cleanLine.split('|');
+                
+                if (parts.length >= 2) {
+                    const user = parts[0].trim();
+                    const pass = parts[1].trim();
+                    
+                    if (user && pass) {
+                        currentProcessedData.push({ user, pass });
+                        const safeUser = escapeHTML(user);
+                        const safePass = escapeHTML(pass);
+                        const rowId = `item-${validCount}`;
+
+                        const div = document.createElement('div');
+                        div.className = "bg-white p-3 md:p-4 rounded-xl border border-slate-200 shadow-sm transition-all duration-300";
+                        div.id = rowId;
+                        div.dataset.userCopied = "false";
+                        div.dataset.passCopied = "false";
+
+                        div.innerHTML = `
+                            <div class="flex flex-col md:flex-row gap-3">
+                                <div class="flex-1 min-w-0 space-y-2">
+                                    <div class="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 p-2 rounded-lg hover:bg-emerald-50 transition-colors gap-2">
+                                        <span class="text-xs font-semibold text-emerald-700 w-16 shrink-0">Tài khoản:</span>
+                                        <span class="font-mono text-sm text-emerald-900 truncate flex-1" title="${safeUser}">${safeUser}</span>
+                                        <button onclick="copySpecific('${safeUser.replace(/'/g, "\\'")}', this, '${rowId}', 'user')" class="shrink-0 text-xs bg-white border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 text-emerald-700 py-1.5 px-3 rounded-md font-medium transition-colors flex items-center gap-1.5 shadow-sm active:scale-95">
+                                            Chép TK
+                                        </button>
+                                    </div>
+                                    <div class="flex items-center justify-between bg-rose-50/50 border border-rose-100 p-2 rounded-lg hover:bg-rose-50 transition-colors gap-2">
+                                        <span class="text-xs font-semibold text-rose-700 w-16 shrink-0">Mật khẩu:</span>
+                                        <span class="font-mono text-sm text-rose-900 truncate flex-1" title="${safePass}">${safePass}</span>
+                                        <button onclick="copySpecific('${safePass.replace(/'/g, "\\'")}', this, '${rowId}', 'pass')" class="shrink-0 text-xs bg-white border border-rose-200 hover:bg-rose-100 hover:border-rose-300 text-rose-700 py-1.5 px-3 rounded-md font-medium transition-colors flex items-center gap-1.5 shadow-sm active:scale-95">
+                                            Chép MK
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-center md:w-28 pt-2 md:pt-0 md:pl-4 md:border-l border-slate-100 shrink-0">
+                                    <div class="status-indicator flex flex-row md:flex-col items-center justify-center gap-2">
+                                        <span class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 status-icon transition-colors">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                        </span>
+                                        <span class="text-[11px] font-medium text-slate-500 status-text text-center transition-colors">Chưa xong</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        fragment.appendChild(div);
+                        validCount++;
+                    }
+                }
+            });
+
+            if (validCount === 0 && rawText.trim() !== '') {
+                outputList.innerHTML = `<div class="text-center text-red-400 py-4 text-sm">Không tìm thấy dữ liệu hợp lệ.</div>`;
+            } else {
+                outputList.appendChild(fragment);
+            }
+            
+            inputCount.textContent = `${validCount} tài khoản`;
+        }
+
+        // Copy All formatted: user|pass
+        function copyAllFormatted() {
+            if (currentProcessedData.length === 0) {
+                showToast("Không có dữ liệu để sao chép!", "error");
+                return;
+            }
+
+            const textToCopy = currentProcessedData.map(item => `${item.user}|${item.pass}`).join('\n');
+            const temp = document.createElement('textarea');
+            temp.value = textToCopy;
+            document.body.appendChild(temp);
+            temp.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast(`Đã chép tất cả ${currentProcessedData.length} tài khoản!`, "success");
+                
+                // Visual feedback for the "Copy All" button
+                const btn = document.getElementById('btn-copy-all');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = `
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                    Đã sao chép tất cả!
+                `;
+                btn.classList.replace('bg-indigo-600', 'bg-slate-800');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.replace('bg-slate-800', 'bg-indigo-600');
+                }, 2000);
+            } catch (err) {
+                showToast("Lỗi sao chép!", "error");
+            }
+            document.body.removeChild(temp);
+        }
+
+        // Copy single element
+        function copySpecific(text, button, rowId, type) {
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast(`Đã chép ${type === 'user' ? 'Tài khoản' : 'Mật khẩu'}!`, "success");
+            } catch (err) {
+                showToast("Lỗi sao chép!", "error");
+            }
+            document.body.removeChild(temp);
+
+            // UI feedback for button
+            const originalText = button.textContent;
+            button.textContent = 'Đã chép';
+            button.classList.add('bg-slate-800', 'text-white', 'border-slate-800');
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.classList.remove('bg-slate-800', 'text-white', 'border-slate-800');
+            }, 1500);
+
+            // Handle completion indicator
+            const row = document.getElementById(rowId);
+            if (row) {
+                if (type === 'user') row.dataset.userCopied = 'true';
+                if (type === 'pass') row.dataset.passCopied = 'true';
+
+                if (row.dataset.userCopied === 'true' && row.dataset.passCopied === 'true') {
+                    row.classList.add('bg-green-50', 'border-green-300');
+                    const icon = row.querySelector('.status-icon');
+                    const textNode = row.querySelector('.status-text');
+                    icon.classList.replace('bg-slate-100', 'bg-green-500');
+                    icon.classList.replace('text-slate-400', 'text-white');
+                    icon.innerHTML = `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
+                    textNode.textContent = "Hoàn tất";
+                    textNode.classList.replace('text-slate-500', 'text-green-700');
+                    textNode.classList.add('font-bold');
+                }
+            }
+        }
+
+        // Toast System
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-slate-800' : 'bg-red-600';
+            
+            toast.className = `toast-enter flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white text-sm font-medium ${bgColor}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('toast-exit');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        processData();
+    </script>
+</body>
+</html>
