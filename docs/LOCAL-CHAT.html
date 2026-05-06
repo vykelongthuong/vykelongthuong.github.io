@@ -8,6 +8,12 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- Thêm thư viện Mammoth để đọc file .docx -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <!-- Thêm thư viện PDF.js để đọc file .pdf -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Cấu hình worker cho PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
     <style>
         :root {
             --chat-bg: #f9fafb;
@@ -276,7 +282,7 @@
                     
                     <label class="absolute right-2.5 bottom-2.5 cursor-pointer text-gray-400 hover:text-blue-500 transition-colors" title="Đính kèm file (Ảnh, Text, Docx, Ipynb)">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                        <input type="file" id="fileInput" class="hidden" accept=".txt,.md,.json,.csv,.js,.py,.html,.css,.docx,.png,.jpg,.jpeg,.webp,.gif,.ipynb">
+            <input type="file" id="fileInput" class="hidden" accept=".txt,.md,.json,.csv,.js,.py,.html,.css,.docx,.pdf,.png,.jpg,.jpeg,.webp,.gif,.ipynb">
                     </label>
                 </div>
                 <button id="btnSend" class="bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-lg transition-colors flex-shrink-0 flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 shadow-sm disabled:opacity-50 active-scale touch-friendly">
@@ -654,6 +660,33 @@
                 };
                 reader.readAsArrayBuffer(file);
             } 
+            else if (ext === 'pdf') {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const typedArray = new Uint8Array(event.target.result);
+                        const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise;
+                        let extractedText = '';
+
+                        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                            const page = await pdf.getPage(pageNum);
+                            const textContent = await page.getTextContent();
+                            const pageText = textContent.items.map(function (item) {
+                                return item.str || '';
+                            }).join(' ');
+                            extractedText += `[Trang ${pageNum}]\n${pageText}\n\n`;
+                        }
+
+                        uploadedFile.content = extractedText.trim() || 'PDF không có nội dung văn bản có thể trích xuất.';
+                    } catch (err) {
+                        alert('Lỗi: Không thể đọc file PDF. Vui lòng thử file khác.');
+                        clearFile();
+                    } finally {
+                        els.fileLoading.classList.add('hidden');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
             // YÊU CẦU: Xử lý file Jupyter Notebook (.ipynb)
             else if (ext === 'ipynb') {
                 const reader = new FileReader();
