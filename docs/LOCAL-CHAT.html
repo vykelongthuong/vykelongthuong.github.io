@@ -244,8 +244,28 @@
     <!-- Overlay đóng sidebar trên mobile -->
     <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
-    <!-- Khu vực Chat Chính -->
-    <div class="flex-1 flex flex-col bg-gray-50 relative">
+<!-- Khu vực Chat Chính -->
+<div class="flex-1 flex flex-col bg-gray-50 relative">
+        <!-- Token giới hạn banner -->
+        <div id="tokenFullBar" class="hidden bg-amber-50 border-b border-amber-200 px-4 py-2.5">
+            <div class="flex items-center justify-between max-w-4xl mx-auto">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+                    <span id="tokenFullMsg" class="text-sm text-amber-800">Khung chat đã đầy token!</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btnTokenNew" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md text-xs font-medium transition-colors">Tạo khung mới</button>
+                    <button id="btnTokenClear" class="bg-white hover:bg-amber-100 text-amber-700 border border-amber-300 px-3 py-1.5 rounded-md text-xs font-medium transition-colors">Xóa & Tạo mới</button>
+                </div>
+            </div>
+        </div>
+        <!-- Token usage indicator -->
+        <div id="tokenInfo" class="hidden bg-gray-100 border-b border-gray-200 px-4 py-1.5">
+            <div class="max-w-4xl mx-auto flex items-center gap-3 text-xs text-gray-500">
+                <span>🪙 Tổng token: <strong id="tokenCount" class="text-gray-700">0</strong> / 1,000,000</span>
+                <span id="tokenWarn" class="hidden text-amber-600 font-medium"></span>
+            </div>
+        </div>
         <!-- Khu vực hiển thị tin nhắn (giảm padding) -->
         <div id="chatContainer" class="flex-1 overflow-y-auto p-3 md:p-4 lg:p-5 space-y-3 md:space-y-4">
             <div class="text-center text-gray-400 mt-10">
@@ -430,9 +450,13 @@
 
         let currentSessionId = Date.now().toString();
         let currentMessages = []; // Mảng chứa object {role, content, _uiText, _uiFiles}
+        const TOKEN_LIMIT = 1000000;
+        let currentTokenUsage = 0;
+        let isChatFull = false;
 
         // Trạng thái đính kèm file tạm thời (tối đa 4 file)
         const MAX_UPLOAD_FILES = 4;
+        const MAX_SESSIONS = 5;
         let uploadedFiles = [];
         let isGenerating = false;
 
@@ -448,7 +472,14 @@
             btnSend: document.getElementById('btnSend'),
             historyList: document.getElementById('historyList'),
             btnNewChat: document.getElementById('btnNewChat'),
-            
+            tokenFullBar: document.getElementById('tokenFullBar'),
+            tokenFullMsg: document.getElementById('tokenFullMsg'),
+            btnTokenNew: document.getElementById('btnTokenNew'),
+            btnTokenClear: document.getElementById('btnTokenClear'),
+            tokenInfo: document.getElementById('tokenInfo'),
+            tokenCount: document.getElementById('tokenCount'),
+            tokenWarn: document.getElementById('tokenWarn'),
+
             // Settings Modal
             settingsModal: document.getElementById('settingsModal'),
             btnOpenSettings: document.getElementById('btnOpenSettings'),
@@ -509,6 +540,26 @@
             els.fileInput.addEventListener('change', handleFileUpload);
             els.btnRemoveFile.addEventListener('click', clearFile);
             els.btnNewChat.addEventListener('click', startNewChat);
+            els.btnTokenNew.addEventListener('click', function () { startNewChat(); });
+            els.btnTokenClear.addEventListener('click', function () {
+                if (!canCreateNewSession()) {
+                    showSessionLimitAlert();
+                    return;
+                }
+                els.chatContainer.innerHTML = '';
+                currentMessages = [];
+                resetTokenUsage();
+                currentSessionId = Date.now().toString();
+                saveSession();
+                els.chatContainer.innerHTML = `
+                    <div class="text-center text-gray-400 mt-10">
+                        <svg class="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                        <p class="text-sm">Khung chat mới đã được tạo sau khi xóa khung cũ vì đầy token.</p>
+                    </div>
+                `;
+                renderHistoryList();
+                setTimeout(toggleScrollButtons, 50);
+            });
 
             // Gắn sự kiện Modal Settings
             els.btnOpenSettings.addEventListener('click', () => els.settingsModal.classList.remove('hidden'));
@@ -873,6 +924,10 @@
             saveSettings();
 
             if (!text && !uploadedFiles.length) return;
+            if (isChatFull) {
+                updateTokenUI();
+                return alert('Khung chat đã đạt giới hạn 1,000,000 token. Hãy mở khung chat mới.');
+            }
             if (!settings.modelId) return alert('Vui lòng mở Cài đặt và Chọn Model!');
             if (!settings.baseUrl) return alert('Vui lòng mở Cài đặt và Nhập Base URL!');
 
@@ -987,6 +1042,7 @@
                                 try {
                                     const data = JSON.parse(dataStr);
                                     const delta = data.choices[0]?.delta?.content || "";
+                                    updateTokenUsageFromResponse(data);
                                     assistantReply += delta;
                                     updateMessageUI(replyId, assistantReply);
                                     scrollToBottom();
@@ -998,6 +1054,7 @@
                     currentMessages.push({ role: 'assistant', content: assistantReply });
                 } else {
                     const data = await response.json();
+                    updateTokenUsageFromResponse(data);
                     const assistantReply = data.choices[0].message.content;
                     updateMessageUI(replyId, assistantReply);
                     currentMessages.push({ role: 'assistant', content: assistantReply });
@@ -1090,6 +1147,54 @@
             els.chatContainer.scrollTop = els.chatContainer.scrollHeight;
         }
 
+        function updateTokenUI() {
+            if (!els.tokenInfo || !els.tokenCount) return;
+            els.tokenCount.textContent = currentTokenUsage.toLocaleString('en-US');
+            els.tokenInfo.classList.toggle('hidden', currentTokenUsage === 0);
+            isChatFull = currentTokenUsage >= TOKEN_LIMIT;
+
+            if (els.tokenWarn) {
+                const remaining = Math.max(TOKEN_LIMIT - currentTokenUsage, 0);
+                els.tokenWarn.textContent = isChatFull
+                    ? 'Khung chat đã đầy token.'
+                    : `Còn khoảng ${remaining.toLocaleString('en-US')} token`;
+                els.tokenWarn.classList.toggle('hidden', currentTokenUsage < TOKEN_LIMIT * 0.8);
+            }
+
+            if (els.tokenFullBar) {
+                els.tokenFullBar.classList.toggle('hidden', !isChatFull);
+            }
+            if (els.tokenFullMsg) {
+                els.tokenFullMsg.textContent = `Khung chat đã đầy: ${currentTokenUsage.toLocaleString('en-US')} / ${TOKEN_LIMIT.toLocaleString('en-US')} token.`;
+            }
+            if (els.btnSend) {
+                els.btnSend.disabled = isChatFull || isGenerating;
+            }
+        }
+
+        function updateTokenUsageFromResponse(data) {
+            if (!data || !data.usage) return;
+            const totalTokens = Number(data.usage.total_tokens);
+            if (!Number.isFinite(totalTokens)) return;
+            currentTokenUsage = Math.max(currentTokenUsage, totalTokens);
+            updateTokenUI();
+        }
+
+        function resetTokenUsage() {
+            currentTokenUsage = 0;
+            isChatFull = false;
+            updateTokenUI();
+        }
+
+        function canCreateNewSession() {
+            const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            return history.length < MAX_SESSIONS;
+        }
+
+        function showSessionLimitAlert() {
+            alert(`Đã đạt giới hạn ${MAX_SESSIONS} phiên chat. Vui lòng xóa 1 phiên bất kỳ trước khi tạo phiên mới.`);
+        }
+
         function toggleScrollButtons() {
             const el = els.chatContainer;
             const distFromTop = el.scrollTop;
@@ -1173,7 +1278,7 @@
             } else {
                 history.unshift({ id: currentSessionId, title: title, updatedAt: Date.now() });
             }
-            history = history.slice(0, 5);
+            history = history.slice(0, MAX_SESSIONS);
             localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
             renderHistoryList();
         }
@@ -1297,8 +1402,13 @@
 
         function startNewChat() {
             if (isGenerating) return;
+            if (!canCreateNewSession()) {
+                showSessionLimitAlert();
+                return;
+            }
             currentSessionId = Date.now().toString();
             currentMessages = [];
+            resetTokenUsage();
             els.chatContainer.innerHTML = `
                 <div class="text-center text-gray-400 mt-10">
                     <svg class="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
