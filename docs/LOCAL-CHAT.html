@@ -273,6 +273,7 @@
             </div>
             <div class="flex-1 overflow-auto p-3 bg-gray-50">
                 <pre id="fileModalContent" class="text-xs text-gray-800 whitespace-pre-wrap font-mono"></pre>
+                <div id="fileModalImages" class="mt-3 space-y-3"></div>
             </div>
         </div>
     </div>
@@ -281,6 +282,10 @@
         // --- CẤU HÌNH & TRẠNG THÁI ---
         const CACHE_KEY = 'local_ai_settings';
         const HISTORY_KEY = 'local_ai_history';
+
+        // File content store (tránh nhúng base64 lớn vào onclick)
+        const _fileStore = {};
+        let _fileIdCounter = 0;
         
         let settings = {
             baseUrl: '',
@@ -327,6 +332,7 @@
             btnCloseFileModal: document.getElementById('btnCloseFileModal'),
             fileModalTitle: document.getElementById('fileModalTitle'),
             fileModalContent: document.getElementById('fileModalContent'),
+            fileModalImages: document.getElementById('fileModalImages'),
 
             // Scroll buttons
             scrollBtns: document.getElementById('scrollBtns'),
@@ -574,6 +580,11 @@
                                                                 extractedText += text;
                                                                 if (!text.endsWith('\n')) extractedText += '\n';
                                                             } else if (mimeType.startsWith('image/')) {
+                                                                const imgData = output.data[mimeType];
+                                                                if (typeof imgData === 'string') {
+                                                                    uploadedFile._nbImages = uploadedFile._nbImages || [];
+                                                                    uploadedFile._nbImages.push({ mimeType, data: imgData });
+                                                                }
                                                                 extractedText += `[Image: ${mimeType}]\n`;
                                                             } else if (mimeType === 'application/json') {
                                                                 let jsonStr;
@@ -611,6 +622,7 @@
                             });
                         }
                         uploadedFile.content = extractedText.trim() || "Notebook rỗng.";
+                        uploadedFile.images = uploadedFile._nbImages || [];
                     } catch (err) {
                         alert('Lỗi: File .ipynb không hợp lệ (không phải định dạng JSON chuẩn).');
                         clearFile();
@@ -635,7 +647,7 @@
         }
 
         function clearFileState() {
-            uploadedFile = { name: '', content: null, isImage: false, base64: null };
+            uploadedFile = { name: '', content: null, isImage: false, base64: null, images: null, _nbImages: null };
         }
 
         function clearFile() {
@@ -648,6 +660,29 @@
         function openFileModal(name, content) {
             els.fileModalTitle.textContent = decodeURIComponent(name);
             els.fileModalContent.textContent = decodeURIComponent(content);
+            els.fileModal.classList.remove('hidden');
+        }
+
+        function openFileModalById(name, fileId) {
+            const data = _fileStore[fileId];
+            if (!data) return;
+            els.fileModalTitle.textContent = decodeURIComponent(name);
+            els.fileModalContent.textContent = data.content || '';
+
+            // Render images if any
+            els.fileModalImages.innerHTML = '';
+            if (data.images && data.images.length) {
+                data.images.forEach(function (img) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'border border-gray-200 rounded-lg p-2 bg-white';
+                    const imgEl = document.createElement('img');
+                    imgEl.src = 'data:' + img.mimeType + ';base64,' + img.data;
+                    imgEl.className = 'max-w-full h-auto mx-auto';
+                    imgEl.alt = 'Notebook output image (' + img.mimeType + ')';
+                    wrapper.appendChild(imgEl);
+                    els.fileModalImages.appendChild(wrapper);
+                });
+            }
             els.fileModal.classList.remove('hidden');
         }
 
@@ -677,7 +712,7 @@
             } 
             else if (uploadedFile.content) {
                 msgObj.content = `Nội dung file đính kèm:\n\`\`\`\n${uploadedFile.content}\n\`\`\`\n\n${text ? 'Yêu cầu: ' + text : 'Hãy phân tích file trên.'}`;
-                msgObj._uiFile = { name: uploadedFile.name, isImage: false, content: uploadedFile.content };
+                msgObj._uiFile = { name: uploadedFile.name, isImage: false, content: uploadedFile.content, images: uploadedFile.images || null };
             } 
             else {
                 msgObj.content = text;
@@ -817,10 +852,15 @@
                     if (msgObj._uiFile.isImage) {
                         innerHTML += `<img src="${msgObj._uiFile.data}" class="max-w-xs md:max-w-sm rounded-lg mb-2 border border-blue-400">`;
                     } else {
-                        const safeContent = encodeURIComponent(msgObj._uiFile.content).replace(/'/g, "%27");
+                        const fileId = 'f' + (++_fileIdCounter);
+                        _fileStore[fileId] = {
+                            name: msgObj._uiFile.name,
+                            content: msgObj._uiFile.content,
+                            images: msgObj._uiFile.images || null
+                        };
                         const safeName = encodeURIComponent(msgObj._uiFile.name).replace(/'/g, "%27");
                         innerHTML += `
-                            <button onclick="openFileModal('${safeName}', '${safeContent}')" class="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-800 transition-colors text-white px-2.5 py-1.5 rounded-lg text-xs mb-1.5 w-full text-left">
+                            <button onclick="openFileModalById('${safeName}', '${fileId}')" class="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-800 transition-colors text-white px-2.5 py-1.5 rounded-lg text-xs mb-1.5 w-full text-left">
                                 <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                 <span class="truncate">${escapeHTML(msgObj._uiFile.name)}</span>
                             </button>
