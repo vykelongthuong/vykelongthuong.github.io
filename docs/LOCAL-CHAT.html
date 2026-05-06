@@ -267,9 +267,9 @@
         <!-- Khu vực nhập liệu -->
         <div class="p-3 bg-white border-t border-gray-200">
             <!-- Hiển thị file đã chọn -->
-            <div id="filePreview" class="hidden mb-2 items-center gap-2 bg-blue-50 text-blue-700 px-2 py-1.5 rounded-md text-xs border border-blue-100 inline-flex">
+            <div id="filePreview" class="hidden mb-2 items-center gap-2 bg-blue-50 text-blue-700 px-2 py-1.5 rounded-md text-xs border border-blue-100 inline-flex max-w-full">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                <span id="fileName" class="file-name-label truncate">filename.txt</span>
+                <span id="fileName" class="file-name-label truncate">Chưa chọn file</span>
                 <span id="fileLoading" class="hidden ml-1 text-[10px] italic text-blue-400">Đang xử lý...</span>
                 <button id="btnRemoveFile" class="ml-1 text-blue-400 hover:text-blue-700 active-scale">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -280,9 +280,9 @@
                 <div class="relative flex-1">
                     <textarea id="messageInput" rows="1" class="w-full block px-3 py-2.5 bg-gray-100 border-transparent rounded-lg text-gray-800 text-sm focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none pr-10 transition-all" placeholder="Nhập tin nhắn (Shift+Enter xuống dòng)..."></textarea>
                     
-                    <label class="absolute right-2.5 bottom-2.5 cursor-pointer text-gray-400 hover:text-blue-500 transition-colors" title="Đính kèm file (Ảnh, Text, Docx, Ipynb)">
+                    <label class="absolute right-2.5 bottom-2.5 cursor-pointer text-gray-400 hover:text-blue-500 transition-colors" title="Đính kèm tối đa 4 file (Ảnh, Text, Docx, PDF, Ipynb)">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-            <input type="file" id="fileInput" class="hidden" accept=".txt,.md,.json,.csv,.js,.py,.html,.css,.docx,.pdf,.png,.jpg,.jpeg,.webp,.gif,.ipynb">
+            <input type="file" id="fileInput" class="hidden" accept=".txt,.md,.json,.csv,.js,.py,.html,.css,.docx,.pdf,.png,.jpg,.jpeg,.webp,.gif,.ipynb" multiple>
                     </label>
                 </div>
                 <button id="btnSend" class="bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-lg transition-colors flex-shrink-0 flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 shadow-sm disabled:opacity-50 active-scale touch-friendly">
@@ -429,10 +429,11 @@
         };
 
         let currentSessionId = Date.now().toString();
-        let currentMessages = []; // Mảng chứa object {role, content, _uiText, _uiFile}
-        
-        // Trạng thái đính kèm file tạm thời
-        let uploadedFile = { name: '', content: null, isImage: false, base64: null };
+        let currentMessages = []; // Mảng chứa object {role, content, _uiText, _uiFiles}
+
+        // Trạng thái đính kèm file tạm thời (tối đa 4 file)
+        const MAX_UPLOAD_FILES = 4;
+        let uploadedFiles = [];
         let isGenerating = false;
 
         // --- DOM ELEMENTS ---
@@ -621,221 +622,219 @@
             }
         }
 
-        // --- XỬ LÝ FILE UPLOAD (TEXT, DOCX, ẢNH, IPYNB) ---
-        function handleFileUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+        // --- X? L? FILE UPLOAD (TEXT, DOCX, PDF, ?NH, IPYNB) ---
+        function updateFilePreview() {
+            if (!uploadedFiles.length) {
+                els.filePreview.classList.add('hidden');
+                els.filePreview.classList.remove('flex');
+                els.fileName.textContent = 'Ch?a ch?n file';
+                els.fileLoading.classList.add('hidden');
+                return;
+            }
 
-            clearFileState();
-            uploadedFile.name = file.name;
-
-            els.fileName.textContent = file.name;
+            els.fileName.textContent = uploadedFiles.map(function (file) { return file.name; }).join(', ');
             els.filePreview.classList.remove('hidden');
             els.filePreview.classList.add('flex');
-            els.fileLoading.classList.remove('hidden');
+        }
 
-            const ext = file.name.split('.').pop().toLowerCase();
-
-            if (file.type.startsWith('image/')) {
-                uploadedFile.isImage = true;
+        function readFileAsText(file) {
+            return new Promise(function (resolve, reject) {
                 const reader = new FileReader();
-                reader.onload = (event) => {
-                    uploadedFile.base64 = event.target.result;
-                    els.fileLoading.classList.add('hidden');
-                };
+                reader.onload = function (event) { resolve(event.target.result); };
+                reader.onerror = reject;
+                reader.readAsText(file);
+            });
+        }
+
+        function readFileAsArrayBuffer(file) {
+            return new Promise(function (resolve, reject) {
+                const reader = new FileReader();
+                reader.onload = function (event) { resolve(event.target.result); };
+                reader.onerror = reject;
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function readFileAsDataURL(file) {
+            return new Promise(function (resolve, reject) {
+                const reader = new FileReader();
+                reader.onload = function (event) { resolve(event.target.result); };
+                reader.onerror = reject;
                 reader.readAsDataURL(file);
-            } 
-            else if (ext === 'docx') {
-                const reader = new FileReader();
-                reader.onload = async (event) => {
-                    try {
-                        const result = await mammoth.extractRawText({ arrayBuffer: event.target.result });
-                        uploadedFile.content = result.value;
-                    } catch (err) {
-                        alert('Lỗi: File DOCX không hợp lệ.');
-                        clearFile();
-                    } finally {
-                        els.fileLoading.classList.add('hidden');
-                    }
-                };
-                reader.readAsArrayBuffer(file);
-            } 
-            else if (ext === 'pdf') {
-                const reader = new FileReader();
-                reader.onload = async (event) => {
-                    try {
-                        const typedArray = new Uint8Array(event.target.result);
-                        const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise;
-                        let extractedText = '';
+            });
+        }
 
-                        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                            const page = await pdf.getPage(pageNum);
-                            const textContent = await page.getTextContent();
-                            const pageText = textContent.items.map(function (item) {
-                                return item.str || '';
-                            }).join(' ');
-                            extractedText += `[Trang ${pageNum}]\n${pageText}\n\n`;
-                        }
+        async function extractPdfText(arrayBuffer) {
+            const typedArray = new Uint8Array(arrayBuffer);
+            const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise;
+            let extractedText = '';
 
-                        uploadedFile.content = extractedText.trim() || 'PDF không có nội dung văn bản có thể trích xuất.';
-                    } catch (err) {
-                        alert('Lỗi: Không thể đọc file PDF. Vui lòng thử file khác.');
-                        clearFile();
-                    } finally {
-                        els.fileLoading.classList.add('hidden');
-                    }
-                };
-                reader.readAsArrayBuffer(file);
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                const page = await pdf.getPage(pageNum);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(function (item) {
+                    return item.str || '';
+                }).join(' ');
+                extractedText += `[Trang ${pageNum}]\n${pageText}\n\n`;
             }
-            // YÊU CẦU: Xử lý file Jupyter Notebook (.ipynb)
-            else if (ext === 'ipynb') {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    try {
-                        const notebook = JSON.parse(event.target.result);
-                        let extractedText = "";
 
-                        // Metadata notebook
-                        const meta = notebook.metadata;
-                        if (meta) {
-                            const lang = meta.language_info;
-                            if (lang && lang.name) {
-                                extractedText += `[Notebook Info] Language: ${lang.name}${lang.version ? ' ' + lang.version : ''}\n`;
-                            }
-                            const kernel = meta.kernelspec;
-                            if (kernel && kernel.display_name) {
-                                extractedText += `[Notebook Info] Kernel: ${kernel.display_name}\n`;
-                            }
-                            extractedText += '\n';
-                        }
+            return extractedText.trim() || 'PDF kh?ng c? n?i dung v?n b?n c? th? tr?ch xu?t.';
+        }
 
-                        if (notebook.cells && Array.isArray(notebook.cells)) {
-                            notebook.cells.forEach((cell, index) => {
-                                // source có thể là string hoặc array
-                                let source = '';
-                                if (Array.isArray(cell.source)) {
-                                    source = cell.source.join('');
-                                } else if (typeof cell.source === 'string') {
-                                    source = cell.source;
-                                }
+        function extractNotebookText(rawText, fileData) {
+            const notebook = JSON.parse(rawText);
+            let extractedText = '';
 
-                                if (cell.cell_type === 'markdown') {
-                                    extractedText += `[Markdown Cell ${index + 1}]:\n${source}\n\n`;
-                                } else if (cell.cell_type === 'code') {
-                                    const execCount = cell.execution_count != null ? ` (execution #${cell.execution_count})` : '';
-                                    extractedText += `[Code Cell ${index + 1}]${execCount}:\n${source}\n`;
+            const meta = notebook.metadata;
+            if (meta) {
+                const lang = meta.language_info;
+                if (lang && lang.name) {
+                    extractedText += `[Notebook Info] Language: ${lang.name}${lang.version ? ' ' + lang.version : ''}\n`;
+                }
+                const kernel = meta.kernelspec;
+                if (kernel && kernel.display_name) {
+                    extractedText += `[Notebook Info] Kernel: ${kernel.display_name}\n`;
+                }
+                extractedText += '\n';
+            }
 
-                                    // Outputs
-                                    if (cell.outputs && Array.isArray(cell.outputs) && cell.outputs.length > 0) {
-                                        extractedText += `--- Output ---\n`;
-                                        cell.outputs.forEach(output => {
-                                            // stream (stdout / stderr)
-                                            if (output.output_type === 'stream') {
-                                                let text = '';
-                                                if (Array.isArray(output.text)) {
-                                                    text = output.text.join('');
-                                                } else if (typeof output.text === 'string') {
-                                                    text = output.text;
+            if (notebook.cells && Array.isArray(notebook.cells)) {
+                notebook.cells.forEach(function (cell, index) {
+                    let source = '';
+                    if (Array.isArray(cell.source)) source = cell.source.join('');
+                    else if (typeof cell.source === 'string') source = cell.source;
+
+                    if (cell.cell_type === 'markdown') {
+                        extractedText += `[Markdown Cell ${index + 1}]:\n${source}\n\n`;
+                    } else if (cell.cell_type === 'code') {
+                        const execCount = cell.execution_count != null ? ` (execution #${cell.execution_count})` : '';
+                        extractedText += `[Code Cell ${index + 1}]${execCount}:\n${source}\n`;
+
+                        if (cell.outputs && Array.isArray(cell.outputs) && cell.outputs.length > 0) {
+                            extractedText += `--- Output ---\n`;
+                            cell.outputs.forEach(function (output) {
+                                if (output.output_type === 'stream') {
+                                    let outputText = '';
+                                    if (Array.isArray(output.text)) outputText = output.text.join('');
+                                    else if (typeof output.text === 'string') outputText = output.text;
+                                    if (output.name === 'stderr') extractedText += `[stderr]\n`;
+                                    extractedText += outputText;
+                                    if (!outputText.endsWith('\n')) extractedText += '\n';
+                                } else if (output.output_type === 'execute_result' || output.output_type === 'display_data') {
+                                    if (output.data) {
+                                        Object.keys(output.data).forEach(function (mimeType) {
+                                            if (mimeType === 'text/plain' || mimeType === 'text/html' || mimeType === 'text/markdown') {
+                                                let outputText = Array.isArray(output.data[mimeType]) ? output.data[mimeType].join('') : String(output.data[mimeType]);
+                                                extractedText += `[${mimeType}]\n${outputText}\n`;
+                                            } else if (mimeType.startsWith('image/')) {
+                                                const imgData = output.data[mimeType];
+                                                if (typeof imgData === 'string') {
+                                                    fileData._nbImages = fileData._nbImages || [];
+                                                    fileData._nbImages.push({ mimeType: mimeType, data: imgData });
                                                 }
-                                                if (output.name === 'stderr') {
-                                                    extractedText += `[stderr]\n`;
-                                                }
-                                                extractedText += text;
-                                                if (!text.endsWith('\n')) extractedText += '\n';
-                                            }
-                                            // execute_result / display_data / update_display_data
-                                            else if (output.output_type === 'execute_result' || output.output_type === 'display_data' || output.output_type === 'update_display_data') {
-                                                if (output.data) {
-                                                    for (const mimeType in output.data) {
-                                                        if ({}.hasOwnProperty.call(output.data, mimeType)) {
-                                                            if (mimeType.startsWith('text/')) {
-                                                                let text = '';
-                                                                if (Array.isArray(output.data[mimeType])) {
-                                                                    text = output.data[mimeType].join('');
-                                                                } else if (typeof output.data[mimeType] === 'string') {
-                                                                    text = output.data[mimeType];
-                                                                }
-                                                                if (mimeType !== 'text/plain') {
-                                                                    extractedText += `[${mimeType}]\n`;
-                                                                }
-                                                                extractedText += text;
-                                                                if (!text.endsWith('\n')) extractedText += '\n';
-                                                            } else if (mimeType.startsWith('image/')) {
-                                                                const imgData = output.data[mimeType];
-                                                                if (typeof imgData === 'string') {
-                                                                    uploadedFile._nbImages = uploadedFile._nbImages || [];
-                                                                    uploadedFile._nbImages.push({ mimeType, data: imgData });
-                                                                }
-                                                                extractedText += `[Image: ${mimeType}]\n`;
-                                                            } else if (mimeType === 'application/json') {
-                                                                let jsonStr;
-                                                                if (typeof output.data[mimeType] === 'string') {
-                                                                    jsonStr = output.data[mimeType];
-                                                                } else {
-                                                                    try { jsonStr = JSON.stringify(output.data[mimeType], null, 2); } catch(e) { jsonStr = ''; }
-                                                                }
-                                                                extractedText += `[JSON data]\n${jsonStr}\n`;
-                                                            } else {
-                                                                extractedText += `[Data: ${mimeType}]\n`;
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            // error
-                                            else if (output.output_type === 'error') {
-                                                const ename = output.ename || '';
-                                                const evalue = output.evalue || '';
-                                                const traceback = Array.isArray(output.traceback) ? output.traceback.join('\n') : '';
-                                                extractedText += `[ERROR] ${ename}: ${evalue}\n`;
-                                                if (traceback) {
-                                                    extractedText += traceback + '\n';
-                                                }
+                                                extractedText += `[Image: ${mimeType}]\n`;
+                                            } else if (mimeType === 'application/json') {
+                                                let jsonStr = '';
+                                                try { jsonStr = typeof output.data[mimeType] === 'string' ? output.data[mimeType] : JSON.stringify(output.data[mimeType], null, 2); } catch(e) {}
+                                                extractedText += `[JSON data]\n${jsonStr}\n`;
+                                            } else {
+                                                extractedText += `[Data: ${mimeType}]\n`;
                                             }
                                         });
-                                        extractedText += `--- End Output ---\n\n`;
-                                    } else {
-                                        extractedText += `(no output)\n\n`;
                                     }
-                                } else if (cell.cell_type === 'raw') {
-                                    extractedText += `[Raw Cell ${index + 1}]:\n${source}\n\n`;
+                                } else if (output.output_type === 'error') {
+                                    const ename = output.ename || '';
+                                    const evalue = output.evalue || '';
+                                    const traceback = Array.isArray(output.traceback) ? output.traceback.join('\n') : '';
+                                    extractedText += `[ERROR] ${ename}: ${evalue}\n`;
+                                    if (traceback) extractedText += traceback + '\n';
                                 }
                             });
+                            extractedText += `--- End Output ---\n\n`;
+                        } else {
+                            extractedText += `(no output)\n\n`;
                         }
-                        uploadedFile.content = extractedText.trim() || "Notebook rỗng.";
-                        uploadedFile.images = uploadedFile._nbImages || [];
-                    } catch (err) {
-                        alert('Lỗi: File .ipynb không hợp lệ (không phải định dạng JSON chuẩn).');
-                        clearFile();
-                    } finally {
-                        els.fileLoading.classList.add('hidden');
+                    } else if (cell.cell_type === 'raw') {
+                        extractedText += `[Raw Cell ${index + 1}]:\n${source}\n\n`;
                     }
-                };
-                reader.readAsText(file);
+                });
             }
-            else {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    uploadedFile.content = event.target.result;
-                    els.fileLoading.classList.add('hidden');
-                };
-                reader.onerror = () => {
-                    alert('Lỗi: Không thể đọc file này!');
-                    clearFile();
-                };
-                reader.readAsText(file);
+
+            return extractedText.trim() || 'Notebook r?ng.';
+        }
+
+        async function parseUploadFile(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            const fileData = { name: file.name, content: null, isImage: false, base64: null, images: null, _nbImages: null };
+
+            if (file.type.startsWith('image/')) {
+                fileData.isImage = true;
+                fileData.base64 = await readFileAsDataURL(file);
+                return fileData;
             }
+
+            if (ext === 'docx') {
+                const arrayBuffer = await readFileAsArrayBuffer(file);
+                const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+                fileData.content = result.value || 'DOCX kh?ng c? n?i dung v?n b?n.';
+                return fileData;
+            }
+
+            if (ext === 'pdf') {
+                const arrayBuffer = await readFileAsArrayBuffer(file);
+                fileData.content = await extractPdfText(arrayBuffer);
+                return fileData;
+            }
+
+            if (ext === 'ipynb') {
+                const rawText = await readFileAsText(file);
+                fileData.content = extractNotebookText(rawText, fileData);
+                fileData.images = fileData._nbImages || null;
+                return fileData;
+            }
+
+            fileData.content = await readFileAsText(file);
+            return fileData;
+        }
+
+        async function handleFileUpload(e) {
+            const files = Array.from(e.target.files || []);
+            if (!files.length) return;
+
+            if (files.length > MAX_UPLOAD_FILES) {
+                alert(`Ch? c? th? ??nh k?m t?i ?a ${MAX_UPLOAD_FILES} file m?i l?n.`);
+            }
+
+            clearFileState();
+            els.fileLoading.classList.remove('hidden');
+            els.fileName.textContent = '?ang x? l? file...';
+            els.filePreview.classList.remove('hidden');
+            els.filePreview.classList.add('flex');
+
+            const selectedFiles = files.slice(0, MAX_UPLOAD_FILES);
+            const parsedFiles = [];
+
+            for (const file of selectedFiles) {
+                try {
+                    parsedFiles.push(await parseUploadFile(file));
+                } catch (err) {
+                    alert(`L?i: Kh?ng th? ??c file ${file.name}. Vui l?ng th? file kh?c.`);
+                }
+            }
+
+            uploadedFiles = parsedFiles;
+            els.fileLoading.classList.add('hidden');
+            updateFilePreview();
         }
 
         function clearFileState() {
-            uploadedFile = { name: '', content: null, isImage: false, base64: null, images: null, _nbImages: null };
+            uploadedFiles = [];
         }
 
         function clearFile() {
             clearFileState();
             els.fileInput.value = '';
-            els.filePreview.classList.add('hidden');
-            els.filePreview.classList.remove('flex');
+            updateFilePreview();
         }
 
         function openFileModal(name, content) {
@@ -873,7 +872,7 @@
             const text = els.messageInput.value.trim();
             saveSettings();
 
-            if (!text && !uploadedFile.content && !uploadedFile.base64) return;
+            if (!text && !uploadedFiles.length) return;
             if (!settings.modelId) return alert('Vui lòng mở Cài đặt và Chọn Model!');
             if (!settings.baseUrl) return alert('Vui lòng mở Cài đặt và Nhập Base URL!');
 
@@ -881,21 +880,40 @@
                 role: 'user',
                 content: null, 
                 _uiText: text,
-                _uiFile: null
+                _uiFiles: []
             };
 
-            if (uploadedFile.isImage && uploadedFile.base64) {
-                msgObj.content = [
-                    { type: "text", text: text || "Vui lòng phân tích hình ảnh này." },
-                    { type: "image_url", image_url: { url: uploadedFile.base64 } }
-                ];
-                msgObj._uiFile = { name: uploadedFile.name, isImage: true, data: uploadedFile.base64 };
-            } 
-            else if (uploadedFile.content) {
-                msgObj.content = `Nội dung file đính kèm:\n\`\`\`\n${uploadedFile.content}\n\`\`\`\n\n${text ? 'Yêu cầu: ' + text : 'Hãy phân tích file trên.'}`;
-                msgObj._uiFile = { name: uploadedFile.name, isImage: false, content: uploadedFile.content, images: uploadedFile.images || null };
-            } 
-            else {
+            if (uploadedFiles.length) {
+                const imageFiles = uploadedFiles.filter(function (file) { return file.isImage && file.base64; });
+                const textFiles = uploadedFiles.filter(function (file) { return file.content; });
+
+                msgObj._uiFiles = uploadedFiles.map(function (file) {
+                    return {
+                        name: file.name,
+                        isImage: file.isImage,
+                        data: file.base64 || null,
+                        content: file.content || '',
+                        images: file.images || null
+                    };
+                });
+
+                if (imageFiles.length && !textFiles.length) {
+                    msgObj.content = [{ type: "text", text: text || "Vui lòng phân tích các hình ảnh này." }]
+                        .concat(imageFiles.map(function (file) {
+                            return { type: "image_url", image_url: { url: file.base64 } };
+                        }));
+                } else {
+                    const fileBlocks = textFiles.map(function (file, index) {
+                        return `===== FILE ${index + 1}: ${file.name} =====\n${file.content}`;
+                    }).join('\n\n');
+
+                    msgObj.content = `Nội dung các file đính kèm:\n\n\`\`\`\n${fileBlocks}\n\`\`\`\n\n${text ? 'Yêu cầu: ' + text : 'Hãy phân tích các file trên.'}`;
+
+                    if (imageFiles.length) {
+                        msgObj.content += `\n\nGhi chú: Có ${imageFiles.length} file ảnh đính kèm trong giao diện. Nếu API hiện tại không hỗ trợ vision kèm text, hãy hỏi riêng về ảnh.`;
+                    }
+                }
+            } else {
                 msgObj.content = text;
             }
 
@@ -1030,24 +1048,26 @@
                 : 'bg-white text-gray-800 rounded-2xl rounded-tl-sm px-4 py-2 text-sm shadow-sm border border-gray-100 msg-bubble-assistant markdown-body';
 
             if (msgObj.role === 'user') {
-                if (msgObj._uiFile) {
-                    if (msgObj._uiFile.isImage) {
-                        innerHTML += `<img src="${msgObj._uiFile.data}" class="max-w-xs md:max-w-sm rounded-lg mb-2 border border-blue-400">`;
-                    } else {
-                        const fileId = 'f' + (++_fileIdCounter);
-                        _fileStore[fileId] = {
-                            name: msgObj._uiFile.name,
-                            content: msgObj._uiFile.content || '',
-                            images: msgObj._uiFile.images || null
-                        };
-                        const safeName = encodeURIComponent(msgObj._uiFile.name).replace(/'/g, "%27");
-                        innerHTML += `
-                            <button onclick="openFileModalById('${safeName}', '${fileId}')" class="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-800 transition-colors text-white px-2.5 py-1.5 rounded-lg text-xs mb-1.5 w-full text-left">
-                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                <span class="truncate">${escapeHTML(msgObj._uiFile.name)}</span>
-                            </button>
-                        `;
-                    }
+                if (msgObj._uiFiles && msgObj._uiFiles.length) {
+                    msgObj._uiFiles.forEach(function (file) {
+                        if (file.isImage && file.data) {
+                            innerHTML += `<img src="${file.data}" class="max-w-xs md:max-w-sm rounded-lg mb-2 border border-blue-400">`;
+                        } else {
+                            const fileId = 'f' + (++_fileIdCounter);
+                            _fileStore[fileId] = {
+                                name: file.name,
+                                content: file.content || '',
+                                images: file.images || null
+                            };
+                            const safeName = encodeURIComponent(file.name).replace(/'/g, "%27");
+                            innerHTML += `
+                                <button onclick="openFileModalById('${safeName}', '${fileId}')" class="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-800 transition-colors text-white px-2.5 py-1.5 rounded-lg text-xs mb-1.5 w-full text-left">
+                                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <span class="truncate">${escapeHTML(file.name)}</span>
+                                </button>
+                            `;
+                        }
+                    });
                 }
                 if (msgObj._uiText) {
                     innerHTML += `<div class="whitespace-pre-wrap leading-relaxed">${escapeHTML(msgObj._uiText)}</div>`;
@@ -1130,8 +1150,10 @@
             const firstMsg = currentMessages[0];
             if (firstMsg._uiText) {
                 title = firstMsg._uiText.substring(0, 30);
-            } else if (firstMsg._uiFile) {
-                title = `Tệp: ${firstMsg._uiFile.name}`;
+            } else if (firstMsg._uiFiles && firstMsg._uiFiles.length) {
+                title = firstMsg._uiFiles.length === 1
+                    ? `Tệp: ${firstMsg._uiFiles[0].name}`
+                    : `Tệp: ${firstMsg._uiFiles.length} file`;
             }
 
             // Lưu đầy đủ messages (kèm file, ảnh) vào IndexedDB
