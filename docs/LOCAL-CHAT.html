@@ -621,8 +621,8 @@
         }
 
         function openFileModal(name, content) {
-            els.fileModalTitle.textContent = name;
-            els.fileModalContent.textContent = content;
+            els.fileModalTitle.textContent = decodeURIComponent(name);
+            els.fileModalContent.textContent = decodeURIComponent(content);
             els.fileModal.classList.remove('hidden');
         }
 
@@ -792,10 +792,10 @@
                     if (msgObj._uiFile.isImage) {
                         innerHTML += `<img src="${msgObj._uiFile.data}" class="max-w-xs md:max-w-sm rounded-lg mb-2 border border-blue-400">`;
                     } else {
-                        const safeContent = escapeHTML(msgObj._uiFile.content).replace(/'/g, "\\'");
-                        const safeName = escapeHTML(msgObj._uiFile.name).replace(/'/g, "\\'");
+                        const safeContent = encodeURIComponent(msgObj._uiFile.content);
+                        const safeName = encodeURIComponent(msgObj._uiFile.name);
                         innerHTML += `
-                            <button onclick="openFileModal('${safeName}', \`${safeContent}\`)" class="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-800 transition-colors text-white px-2.5 py-1.5 rounded-lg text-xs mb-1.5 w-full text-left">
+                            <button onclick="openFileModal('${safeName}', '${safeContent}')" class="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-800 transition-colors text-white px-2.5 py-1.5 rounded-lg text-xs mb-1.5 w-full text-left">
                                 <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                 <span class="truncate">${escapeHTML(msgObj._uiFile.name)}</span>
                             </button>
