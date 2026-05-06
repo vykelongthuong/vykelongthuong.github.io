@@ -20,5 +20,16 @@ window.DOCS = [
     category: 'Tool',
     level: 'All',
     readingTime: '1 phút'
+  },
+  {
+    id: 'local-chat',
+    title: 'Local API Chat Client',
+    description: 'Trình chat AI chạy local, kết nối với API tương thích OpenAI. Hỗ trợ gửi file text, ảnh, DOCX, lưu lịch sử 5 phiên.',
+    file: 'docs/LOCAL-CHAT.html',
+    tags: ['Tool', 'Chat', 'AI', 'Utility'],
+    updatedAt: '2026-05-06',
+    category: 'Tool',
+    level: 'All',
+    readingTime: '1 phút'
   }
 ];

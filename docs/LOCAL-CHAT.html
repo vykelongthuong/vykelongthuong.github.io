@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local API Chat Client</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Thêm thư viện Mammoth để đọc file .docx -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <style>
+        :root {
+            --chat-bg: #f9fafb;
+            --chat-panel: #ffffff;
+            --chat-panel-2: #f3f4f6;
+            --chat-text: #1f2937;
+            --chat-muted: #6b7280;
+            --chat-border: #e5e7eb;
+            --chat-primary: #2563eb;
+            --chat-primary-soft: rgba(37, 99, 235, 0.1);
+            --chat-code-bg: #1e293b;
+            --chat-code-text: #f8fafc;
+        }
+
+        body[data-theme="dark"] {
+            --chat-bg: #0c1020;
+            --chat-panel: #161b30;
+            --chat-panel-2: #1e2440;
+            --chat-text: #eef2ff;
+            --chat-muted: #9aa3bf;
+            --chat-border: #2a3252;
+            --chat-primary: #8b8bff;
+            --chat-primary-soft: rgba(139, 139, 255, 0.18);
+            --chat-code-bg: #050816;
+            --chat-code-text: #f8fafc;
+        }
+
+        body[data-theme="dark"] .bg-gray-50 { background-color: var(--chat-bg) !important; }
+        body[data-theme="dark"] .bg-white { background-color: var(--chat-panel) !important; }
+        body[data-theme="dark"] .bg-gray-100 { background-color: var(--chat-panel-2) !important; }
+        body[data-theme="dark"] .bg-black\/50 { background-color: rgba(0,0,0,0.7) !important; }
+        body[data-theme="dark"] .text-gray-800 { color: var(--chat-text) !important; }
+        body[data-theme="dark"] .text-gray-700 { color: var(--chat-text) !important; }
+        body[data-theme="dark"] .text-gray-600 { color: var(--chat-muted) !important; }
+        body[data-theme="dark"] .text-gray-500 { color: var(--chat-muted) !important; }
+        body[data-theme="dark"] .text-gray-400 { color: var(--chat-muted) !important; }
+        body[data-theme="dark"] .text-gray-300 { color: var(--chat-muted) !important; }
+        body[data-theme="dark"] .text-blue-600 { color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .text-blue-700 { color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .text-blue-500 { color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .text-blue-400 { color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .text-red-500 { color: #f87171 !important; }
+        body[data-theme="dark"] .border-gray-200 { border-color: var(--chat-border) !important; }
+        body[data-theme="dark"] .border-gray-300 { border-color: var(--chat-border) !important; }
+        body[data-theme="dark"] .border-gray-100 { border-color: var(--chat-border) !important; }
+        body[data-theme="dark"] .border-blue-200 { border-color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .border-blue-100 { border-color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .bg-blue-50 { background-color: var(--chat-primary-soft) !important; }
+        body[data-theme="dark"] .bg-blue-500 { background-color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .bg-blue-600 { background-color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .bg-blue-700 { background-color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .bg-emerald-500 { background-color: #5eead4 !important; }
+        body[data-theme="dark"] .hover\:bg-blue-100:hover { background-color: var(--chat-primary-soft) !important; }
+        body[data-theme="dark"] .hover\:bg-blue-700:hover { background-color: color-mix(in srgb, var(--chat-primary) 80%, black) !important; }
+        body[data-theme="dark"] .hover\:bg-blue-800:hover { background-color: color-mix(in srgb, var(--chat-primary) 70%, black) !important; }
+        body[data-theme="dark"] .hover\:text-blue-500:hover { color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .hover\:text-blue-600:hover { color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .hover\:text-blue-700:hover { color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .hover\:text-red-500:hover { color: #f87171 !important; }
+        body[data-theme="dark"] .hover\:bg-red-100:hover { background-color: rgba(248, 113, 113, 0.15) !important; }
+        body[data-theme="dark"] .focus\:border-blue-500:focus { border-color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .focus\:ring-blue-500:focus { --tw-ring-color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .bg-gradient-to-l { background-image: linear-gradient(to left, var(--chat-panel), transparent) !important; }
+        body[data-theme="dark"] .from-white { --tw-gradient-from: var(--chat-panel) !important; }
+        body[data-theme="dark"] .via-white { --tw-gradient-via: var(--chat-panel) !important; }
+        body[data-theme="dark"] .from-blue-50 { --tw-gradient-from: var(--chat-primary-soft) !important; }
+        body[data-theme="dark"] .via-blue-50 { --tw-gradient-via: var(--chat-primary-soft) !important; }
+
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid var(--chat-border);
+            color: var(--chat-muted);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 200ms;
+            width: 100%;
+            text-align: center;
+        }
+        .theme-toggle:hover {
+            border-color: var(--chat-primary);
+            color: var(--chat-primary);
+            background: var(--chat-primary-soft);
+        }
+
+        /* Tùy chỉnh scrollbar nhỏ gọn hơn */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        body[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #2a3252; }
+        body[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #3d4770; }
+
+        /* Markdown styles được thu gọn */
+        .markdown-body p { margin-bottom: 0.6em; }
+        .markdown-body pre { background-color: var(--chat-code-bg); color: var(--chat-code-text); padding: 0.75em; border-radius: 0.5em; overflow-x: auto; margin-bottom: 0.75em; font-size: 0.85em; border: 1px solid rgba(255,255,255,0.08); }
+        .markdown-body code { font-family: monospace; background-color: #e2e8f0; padding: 0.1em 0.3em; border-radius: 0.2em; color: #b91c1c; font-size: 0.9em; }
+        .markdown-body pre code { background-color: transparent; color: inherit; padding: 0; font-size: 1em; }
+        body[data-theme="dark"] .markdown-body code { background-color: rgba(139, 139, 255, 0.15); color: var(--chat-primary); }
+        body[data-theme="dark"] .markdown-body pre { background-color: var(--chat-code-bg); border-color: rgba(255,255,255,0.06); }
+        body[data-theme="dark"] .markdown-body { color: var(--chat-text); }
+        .markdown-body ul { list-style-type: disc; margin-left: 1.5em; margin-bottom: 0.75em; }
+        .markdown-body ol { list-style-type: decimal; margin-left: 1.5em; margin-bottom: 0.75em; }
+
+        /* Tiện ích ẩn hiện nút ở History */
+        .history-item .history-actions { display: none; }
+        .history-item:hover .history-actions { display: flex; }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen flex flex-col overflow-hidden font-sans text-gray-800 text-sm">
+
+    <!-- Header tạm thời -->
+    <header class="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2.5 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <span class="text-sm font-bold text-blue-600">Local AI Client</span>
+        </div>
+        <div class="text-xs text-gray-400">Chat với AI local</div>
+    </header>
+
+    <!-- Main Content: Sidebar + Chat -->
+    <div class="flex-1 flex overflow-hidden">
+    <div class="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm z-10 flex-shrink-0">
+        <div class="p-3 border-b border-gray-200 flex items-center justify-between">
+            <h1 class="text-base font-bold text-blue-600 flex items-center gap-1.5">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                Local AI
+            </h1>
+            <button id="btnOpenSettings" class="text-gray-500 hover:text-blue-600 p-1.5 rounded-md hover:bg-blue-50 transition-colors" title="Cài đặt API">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
+        </div>
+
+        <!-- Lịch sử Chat -->
+        <div class="flex-1 overflow-y-auto p-3">
+            <div class="flex justify-between items-center mb-2">
+                <h2 class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Lịch sử (5 phiên)</h2>
+                <button id="btnNewChat" class="text-blue-500 hover:text-blue-700 p-1" title="Cuộc trò chuyện mới">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </button>
+            </div>
+            <ul id="historyList" class="space-y-1">
+                <!-- Danh sách lịch sử sẽ được render bằng JS -->
+            </ul>
+        </div>
+
+        <!-- Theme Toggle -->
+        <div class="p-3 border-t border-gray-200">
+            <button id="themeBtn" type="button" class="theme-toggle">Đổi theme</button>
+        </div>
+    </div>
+
+    <!-- Khu vực Chat Chính -->
+    <div class="flex-1 flex flex-col bg-gray-50 relative">
+        <!-- Khu vực hiển thị tin nhắn (giảm padding) -->
+        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <div class="text-center text-gray-400 mt-10">
+                <svg class="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                <p class="text-sm">Bắt đầu cuộc trò chuyện mới. Dữ liệu được lưu trữ local.</p>
+            </div>
+        </div>
+
+        <!-- Khu vực nhập liệu -->
+        <div class="p-3 bg-white border-t border-gray-200">
+            <!-- Hiển thị file đã chọn -->
+            <div id="filePreview" class="hidden mb-2 items-center gap-2 bg-blue-50 text-blue-700 px-2 py-1.5 rounded-md text-xs border border-blue-100 inline-flex">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                <span id="fileName" class="max-w-[200px] truncate">filename.txt</span>
+                <span id="fileLoading" class="hidden ml-1 text-[10px] italic text-blue-400">Đang xử lý...</span>
+                <button id="btnRemoveFile" class="ml-1 text-blue-400 hover:text-blue-700">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="flex items-end gap-2 max-w-4xl mx-auto">
+                <div class="relative flex-1">
+                    <textarea id="messageInput" rows="1" class="w-full block px-3 py-2.5 bg-gray-100 border-transparent rounded-lg text-gray-800 text-sm focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none pr-10 transition-all" placeholder="Nhập tin nhắn (Shift+Enter xuống dòng)..."></textarea>
+                    
+                    <label class="absolute right-2.5 bottom-2.5 cursor-pointer text-gray-400 hover:text-blue-500 transition-colors" title="Đính kèm file (Ảnh, Text, Docx, Ipynb)">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                        <input type="file" id="fileInput" class="hidden" accept=".txt,.md,.json,.csv,.js,.py,.html,.css,.docx,.png,.jpg,.jpeg,.webp,.gif,.ipynb">
+                    </label>
+                </div>
+                <button id="btnSend" class="bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-lg transition-colors flex-shrink-0 flex items-center justify-center w-10 h-10 shadow-sm disabled:opacity-50">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cài đặt API -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col mx-4">
+            <div class="p-3 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-base text-gray-700">⚙️ Cài đặt API</h3>
+                <button id="btnCloseSettings" class="text-gray-400 hover:text-red-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-4 space-y-3 overflow-y-auto">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Base URL</label>
+                    <input type="text" id="baseUrl" class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-500" placeholder="vd: http://localhost:8080 (Tự động thêm /v1)">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">API Key</label>
+                    <input type="password" id="apiKey" class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-500" placeholder="sk-...">
+                </div>
+                
+                <hr class="border-gray-200 my-2">
+                
+                <div class="flex items-center gap-2">
+                    <button id="btnFetchModels" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold py-1.5 px-3 rounded-md text-xs transition-colors border border-blue-200">
+                        🔄 Lấy danh sách Model
+                    </button>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Chọn Model</label>
+                    <select id="modelSelect" class="w-full px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-500 bg-gray-50">
+                        <option value="">-- Cần lấy danh sách model trước --</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center justify-between mt-2">
+                    <label class="text-xs font-semibold text-gray-600 cursor-pointer" for="streamToggle">Chế độ Stream (Chữ chạy ra dần)</label>
+                    <input type="checkbox" id="streamToggle" class="w-3.5 h-3.5 text-blue-600 rounded border-gray-300 focus:ring-blue-500" checked>
+                </div>
+
+                <div class="pt-2">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Độ chính xác / Sáng tạo (Temperature)</label>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="temperatureInput" step="0.1" min="0" max="2" class="w-16 px-2 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-blue-500" placeholder="Trống">
+                        <span class="text-[11px] text-gray-400 italic">Để trống = Giá trị mặc định</span>
+                    </div>
+                </div>
+            </div>
+            <div class="p-3 border-t border-gray-200 bg-gray-50 flex justify-end">
+                <button id="btnSaveSettings" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-4 rounded-md text-sm transition-colors">Đóng & Lưu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xem Nội dung File -->
+    <div id="fileModal" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-center justify-center backdrop-blur-sm transition-opacity p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-full max-h-[85vh] flex flex-col">
+            <div class="p-3 border-b border-gray-200 flex justify-between items-center bg-gray-100 rounded-t-xl">
+                <h3 id="fileModalTitle" class="font-bold text-sm text-gray-700 truncate pr-4">Nội dung File</h3>
+                <button id="btnCloseFileModal" class="text-gray-500 hover:text-red-500 bg-gray-200 hover:bg-red-100 p-1 rounded-md transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="flex-1 overflow-auto p-3 bg-gray-50">
+                <pre id="fileModalContent" class="text-xs text-gray-800 whitespace-pre-wrap font-mono"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CẤU HÌNH & TRẠNG THÁI ---
+        const CACHE_KEY = 'local_ai_settings';
+        const HISTORY_KEY = 'local_ai_history';
+        
+        let settings = {
+            baseUrl: '',
+            apiKey: '',
+            modelId: '',
+            stream: true,
+            temperature: ''
+        };
+
+        let currentSessionId = Date.now().toString();
+        let currentMessages = []; // Mảng chứa object {role, content, _uiText, _uiFile}
+        
+        // Trạng thái đính kèm file tạm thời
+        let uploadedFile = { name: '', content: null, isImage: false, base64: null };
+        let isGenerating = false;
+
+        // --- DOM ELEMENTS ---
+        const els = {
+            chatContainer: document.getElementById('chatContainer'),
+            messageInput: document.getElementById('messageInput'),
+            fileInput: document.getElementById('fileInput'),
+            filePreview: document.getElementById('filePreview'),
+            fileName: document.getElementById('fileName'),
+            fileLoading: document.getElementById('fileLoading'),
+            btnRemoveFile: document.getElementById('btnRemoveFile'),
+            btnSend: document.getElementById('btnSend'),
+            historyList: document.getElementById('historyList'),
+            btnNewChat: document.getElementById('btnNewChat'),
+            
+            // Settings Modal
+            settingsModal: document.getElementById('settingsModal'),
+            btnOpenSettings: document.getElementById('btnOpenSettings'),
+            btnCloseSettings: document.getElementById('btnCloseSettings'),
+            btnSaveSettings: document.getElementById('btnSaveSettings'),
+            baseUrl: document.getElementById('baseUrl'),
+            apiKey: document.getElementById('apiKey'),
+            btnFetchModels: document.getElementById('btnFetchModels'),
+            modelSelect: document.getElementById('modelSelect'),
+            streamToggle: document.getElementById('streamToggle'),
+            temperatureInput: document.getElementById('temperatureInput'),
+
+            // File Modal
+            fileModal: document.getElementById('fileModal'),
+            btnCloseFileModal: document.getElementById('btnCloseFileModal'),
+            fileModalTitle: document.getElementById('fileModalTitle'),
+            fileModalContent: document.getElementById('fileModalContent')
+        };
+
+        // --- KHỞI TẠO ---
+        function init() {
+            // Load Settings từ Cache
+            const cachedSettings = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+            settings = { ...settings, ...cachedSettings };
+            
+            els.baseUrl.value = settings.baseUrl;
+            els.apiKey.value = settings.apiKey;
+            els.streamToggle.checked = settings.stream !== false;
+            els.temperatureInput.value = settings.temperature;
+            
+            if(settings.modelId) {
+                els.modelSelect.innerHTML = `<option value="${settings.modelId}">${settings.modelId}</option>`;
+            }
+
+            renderHistoryList();
+
+            // Textarea Auto-resize
+            els.messageInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight < 120 ? this.scrollHeight : 120) + 'px';
+            });
+
+            // Gắn sự kiện
+            els.btnSend.addEventListener('click', sendMessage);
+            els.messageInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            els.fileInput.addEventListener('change', handleFileUpload);
+            els.btnRemoveFile.addEventListener('click', clearFile);
+            els.btnNewChat.addEventListener('click', startNewChat);
+
+            // Gắn sự kiện Modal Settings
+            els.btnOpenSettings.addEventListener('click', () => els.settingsModal.classList.remove('hidden'));
+            const closeSettings = () => {
+                saveSettings();
+                els.settingsModal.classList.add('hidden');
+            };
+            els.btnCloseSettings.addEventListener('click', closeSettings);
+            els.btnSaveSettings.addEventListener('click', closeSettings);
+            els.btnFetchModels.addEventListener('click', fetchModels);
+
+            // Gắn sự kiện Modal File
+            els.btnCloseFileModal.addEventListener('click', () => els.fileModal.classList.add('hidden'));
+        }
+
+        function saveSettings() {
+            settings.baseUrl = els.baseUrl.value.trim();
+            settings.apiKey = els.apiKey.value.trim();
+            settings.modelId = els.modelSelect.value;
+            settings.stream = els.streamToggle.checked;
+            settings.temperature = els.temperatureInput.value.trim();
+            localStorage.setItem(CACHE_KEY, JSON.stringify(settings));
+        }
+
+        function getApiUrl(endpoint) {
+            let base = settings.baseUrl.trim().replace(/\/$/, '');
+            if (!base.endsWith('/v1') && !base.includes('/api/')) {
+                base += '/v1';
+            }
+            return base + endpoint;
+        }
+
+        // --- FETCH MODEL TÙY CHỈNH ---
+        async function fetchModels() {
+            saveSettings();
+            if (!settings.baseUrl) return alert('Vui lòng nhập Base URL!');
+
+            els.btnFetchModels.innerHTML = '🔄 Đang tải...';
+            els.btnFetchModels.disabled = true;
+
+            try {
+                const url = getApiUrl('/models');
+                const headers = {};
+                if (settings.apiKey) headers['Authorization'] = `Bearer ${settings.apiKey}`;
+
+                const response = await fetch(url, { headers });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const data = await response.json();
+                let models = data.data || [];
+
+                // YÊU CẦU: Ưu tiên lọc model mang tên 'chat-completions'
+                const chatCompletionsModel = models.find(m => m.id === 'chat-completions');
+                if (chatCompletionsModel) {
+                    models = [chatCompletionsModel];
+                } else {
+                    // Fallback logic cũ nếu không tìm thấy
+                    const comboModels = models.filter(m => m.order_by === 'combo');
+                    if (comboModels.length > 0) models = comboModels;
+                }
+
+                els.modelSelect.innerHTML = '';
+                if (models.length === 0) {
+                    els.modelSelect.innerHTML = '<option value="">Không tìm thấy model phù hợp</option>';
+                } else {
+                    models.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m.id;
+                        opt.textContent = m.id;
+                        if (m.id === settings.modelId) opt.selected = true;
+                        els.modelSelect.appendChild(opt);
+                    });
+                    saveSettings(); // Update cache
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Lỗi khi fetch models: ' + error.message);
+            } finally {
+                els.btnFetchModels.innerHTML = '🔄 Lấy danh sách Model';
+                els.btnFetchModels.disabled = false;
+            }
+        }
+
+        // --- XỬ LÝ FILE UPLOAD (TEXT, DOCX, ẢNH, IPYNB) ---
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            clearFileState();
+            uploadedFile.name = file.name;
+
+            els.fileName.textContent = file.name;
+            els.filePreview.classList.remove('hidden');
+            els.filePreview.classList.add('flex');
+            els.fileLoading.classList.remove('hidden');
+
+            const ext = file.name.split('.').pop().toLowerCase();
+
+            if (file.type.startsWith('image/')) {
+                uploadedFile.isImage = true;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    uploadedFile.base64 = event.target.result;
+                    els.fileLoading.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            } 
+            else if (ext === 'docx') {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const result = await mammoth.extractRawText({ arrayBuffer: event.target.result });
+                        uploadedFile.content = result.value;
+                    } catch (err) {
+                        alert('Lỗi: File DOCX không hợp lệ.');
+                        clearFile();
+                    } finally {
+                        els.fileLoading.classList.add('hidden');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } 
+            // YÊU CẦU: Xử lý file Jupyter Notebook (.ipynb)
+            else if (ext === 'ipynb') {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const notebook = JSON.parse(event.target.result);
+                        let extractedText = "";
+                        
+                        if (notebook.cells && Array.isArray(notebook.cells)) {
+                            notebook.cells.forEach((cell, index) => {
+                                if (cell.cell_type === 'markdown') {
+                                    extractedText += `[Markdown Cell ${index + 1}]:\n${cell.source.join('')}\n\n`;
+                                } else if (cell.cell_type === 'code') {
+                                    extractedText += `[Code Cell ${index + 1}]:\n${cell.source.join('')}\n\n`;
+                                }
+                            });
+                        }
+                        uploadedFile.content = extractedText.trim() || "Notebook rỗng.";
+                    } catch (err) {
+                        alert('Lỗi: File .ipynb không hợp lệ (không phải định dạng JSON chuẩn).');
+                        clearFile();
+                    } finally {
+                        els.fileLoading.classList.add('hidden');
+                    }
+                };
+                reader.readAsText(file);
+            }
+            else {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    uploadedFile.content = event.target.result;
+                    els.fileLoading.classList.add('hidden');
+                };
+                reader.onerror = () => {
+                    alert('Lỗi: Không thể đọc file này!');
+                    clearFile();
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function clearFileState() {
+            uploadedFile = { name: '', content: null, isImage: false, base64: null };
+        }
+
+        function clearFile() {
+            clearFileState();
+            els.fileInput.value = '';
+            els.filePreview.classList.add('hidden');
+            els.filePreview.classList.remove('flex');
+        }
+
+        function openFileModal(name, content) {
+            els.fileModalTitle.textContent = name;
+            els.fileModalContent.textContent = content;
+            els.fileModal.classList.remove('hidden');
+        }
+
+        // --- XỬ LÝ CHAT & STREAMING ---
+        async function sendMessage() {
+            if (isGenerating) return;
+            const text = els.messageInput.value.trim();
+            saveSettings();
+
+            if (!text && !uploadedFile.content && !uploadedFile.base64) return;
+            if (!settings.modelId) return alert('Vui lòng mở Cài đặt và Chọn Model!');
+            if (!settings.baseUrl) return alert('Vui lòng mở Cài đặt và Nhập Base URL!');
+
+            const msgObj = {
+                role: 'user',
+                content: null, 
+                _uiText: text,
+                _uiFile: null
+            };
+
+            if (uploadedFile.isImage && uploadedFile.base64) {
+                msgObj.content = [
+                    { type: "text", text: text || "Vui lòng phân tích hình ảnh này." },
+                    { type: "image_url", image_url: { url: uploadedFile.base64 } }
+                ];
+                msgObj._uiFile = { name: uploadedFile.name, isImage: true, data: uploadedFile.base64 };
+            } 
+            else if (uploadedFile.content) {
+                msgObj.content = `Nội dung file đính kèm:\n\`\`\`\n${uploadedFile.content}\n\`\`\`\n\n${text ? 'Yêu cầu: ' + text : 'Hãy phân tích file trên.'}`;
+                msgObj._uiFile = { name: uploadedFile.name, isImage: false, content: uploadedFile.content };
+            } 
+            else {
+                msgObj.content = text;
+            }
+
+            clearFile(); 
+            els.messageInput.value = '';
+            els.messageInput.style.height = 'auto';
+
+            currentMessages.push(msgObj);
+            renderMessage(msgObj);
+            
+            isGenerating = true;
+            els.btnSend.disabled = true;
+            els.btnSend.innerHTML = `<svg class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+
+            const replyId = 'msg-' + Date.now();
+            const loadingIndicator = '<div class="flex gap-1 items-center h-5"><div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></div><div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div><div class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div></div>';
+            
+            renderMessage({ role: 'assistant', content: loadingIndicator }, replyId, true);
+            scrollToBottom();
+
+            try {
+                const url = getApiUrl('/chat/completions');
+                const headers = { 'Content-Type': 'application/json' };
+                if (settings.apiKey) headers['Authorization'] = `Bearer ${settings.apiKey}`;
+
+                const apiMessages = currentMessages.map(m => ({
+                    role: m.role,
+                    content: m.content
+                }));
+
+                const payload = {
+                    model: settings.modelId,
+                    messages: apiMessages,
+                    stream: settings.stream
+                };
+
+                if (settings.temperature !== '') {
+                    payload.temperature = parseFloat(settings.temperature);
+                }
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errBody = await response.text();
+                    throw new Error(`Lỗi ${response.status}: ${errBody}`);
+                }
+
+                if (settings.stream) {
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder("utf-8");
+                    let assistantReply = "";
+                    let buffer = "";
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        
+                        buffer += decoder.decode(value, { stream: true });
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop();
+
+                        for (const line of lines) {
+                            const trimmed = line.trim();
+                            if (trimmed.startsWith('data: ')) {
+                                const dataStr = trimmed.substring(6);
+                                if (dataStr === '[DONE]') continue;
+                                try {
+                                    const data = JSON.parse(dataStr);
+                                    const delta = data.choices[0]?.delta?.content || "";
+                                    assistantReply += delta;
+                                    updateMessageUI(replyId, assistantReply);
+                                    scrollToBottom();
+                                } catch (e) {
+                                }
+                            }
+                        }
+                    }
+                    currentMessages.push({ role: 'assistant', content: assistantReply });
+                } else {
+                    const data = await response.json();
+                    const assistantReply = data.choices[0].message.content;
+                    updateMessageUI(replyId, assistantReply);
+                    currentMessages.push({ role: 'assistant', content: assistantReply });
+                }
+                
+                saveSession();
+
+            } catch (error) {
+                console.error(error);
+                updateMessageUI(replyId, `**LỖI:** ${error.message}`);
+                currentMessages.pop(); 
+            } finally {
+                isGenerating = false;
+                els.btnSend.disabled = false;
+                els.btnSend.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>`;
+                scrollToBottom();
+            }
+        }
+
+        function updateMessageUI(id, content) {
+            const el = document.getElementById(id);
+            if (el) {
+                const markdownBody = el.querySelector('.markdown-body');
+                if (markdownBody) {
+                    markdownBody.innerHTML = marked.parse(content);
+                }
+            }
+        }
+
+        // --- RENDER GIAO DIỆN CHAT ---
+        function renderMessage(msgObj, forceId = null, isRawHtml = false) {
+            if (currentMessages.length === 1 && msgObj.role === 'user') {
+                els.chatContainer.innerHTML = '';
+            }
+
+            const wrapper = document.createElement('div');
+            if (forceId) wrapper.id = forceId;
+            wrapper.className = `flex gap-3 ${msgObj.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`;
+
+            const avatarStr = msgObj.role === 'user' 
+                ? `<div class="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-sm">U</div>`
+                : `<div class="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>`;
+
+            let innerHTML = "";
+            const bubbleClass = msgObj.role === 'user' 
+                ? 'bg-blue-600 text-white rounded-2xl rounded-tr-sm px-4 py-2 text-sm max-w-[80%]' 
+                : 'bg-white text-gray-800 rounded-2xl rounded-tl-sm px-4 py-2 text-sm shadow-sm border border-gray-100 max-w-[85%] markdown-body';
+
+            if (msgObj.role === 'user') {
+                if (msgObj._uiFile) {
+                    if (msgObj._uiFile.isImage) {
+                        innerHTML += `<img src="${msgObj._uiFile.data}" class="max-w-xs md:max-w-sm rounded-lg mb-2 border border-blue-400">`;
+                    } else {
+                        const safeContent = escapeHTML(msgObj._uiFile.content).replace(/'/g, "\\'");
+                        const safeName = escapeHTML(msgObj._uiFile.name).replace(/'/g, "\\'");
+                        innerHTML += `
+                            <button onclick="openFileModal('${safeName}', \`${safeContent}\`)" class="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-800 transition-colors text-white px-2.5 py-1.5 rounded-lg text-xs mb-1.5 w-full text-left">
+                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                <span class="truncate">${escapeHTML(msgObj._uiFile.name)}</span>
+                            </button>
+                        `;
+                    }
+                }
+                if (msgObj._uiText) {
+                    innerHTML += `<div class="whitespace-pre-wrap leading-relaxed">${escapeHTML(msgObj._uiText)}</div>`;
+                }
+            } else {
+                innerHTML = isRawHtml ? msgObj.content : marked.parse(msgObj.content);
+            }
+
+            wrapper.innerHTML = `
+                ${avatarStr}
+                <div class="${bubbleClass} overflow-hidden flex flex-col items-start">
+                    ${innerHTML}
+                </div>
+            `;
+            
+            els.chatContainer.appendChild(wrapper);
+        }
+
+        function scrollToBottom() {
+            els.chatContainer.scrollTop = els.chatContainer.scrollHeight;
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag]));
+        }
+
+        // --- QUẢN LÝ LỊCH SỬ ---
+        function saveSession() {
+            if (currentMessages.length === 0) return;
+
+            let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            const existingIndex = history.findIndex(h => h.id === currentSessionId);
+            
+            let title = "Chat mới";
+            const firstMsg = currentMessages[0];
+            if (firstMsg._uiText) {
+                title = firstMsg._uiText.substring(0, 30);
+            } else if (firstMsg._uiFile) {
+                title = `Tệp: ${firstMsg._uiFile.name}`;
+            }
+
+            const sessionData = {
+                id: currentSessionId,
+                title: existingIndex > -1 ? history[existingIndex].title : title,
+                messages: currentMessages,
+                updatedAt: Date.now()
+            };
+
+            if (existingIndex > -1) {
+                history[existingIndex] = sessionData;
+            } else {
+                history.unshift(sessionData);
+            }
+
+            history = history.slice(0, 5); 
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            renderHistoryList();
+        }
+
+        function renderHistoryList() {
+            let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            els.historyList.innerHTML = '';
+
+            if (history.length === 0) {
+                els.historyList.innerHTML = '<li class="text-xs text-gray-400 italic px-2">Chưa có lịch sử</li>';
+                return;
+            }
+
+            history.forEach(session => {
+                const li = document.createElement('li');
+                const isCurrent = session.id === currentSessionId;
+                
+                li.className = `history-item group relative flex items-center justify-between text-xs p-1.5 rounded-md transition-colors border ${isCurrent ? 'bg-blue-50 border-blue-200 text-blue-700 font-medium' : 'hover:bg-gray-100 border-transparent text-gray-600'}`;
+                
+                const span = document.createElement('span');
+                span.className = 'cursor-pointer truncate pr-12 flex-1';
+                span.textContent = session.title;
+                span.onclick = () => loadSession(session.id);
+
+                const actionDiv = document.createElement('div');
+                actionDiv.className = 'history-actions absolute right-1.5 top-1/2 -translate-y-1/2 gap-1 bg-gradient-to-l from-white via-white to-transparent pl-3';
+                if(isCurrent) {
+                    actionDiv.classList.replace('from-white', 'from-blue-50');
+                    actionDiv.classList.replace('via-white', 'via-blue-50');
+                }
+
+                const btnEdit = document.createElement('button');
+                btnEdit.innerHTML = `<svg class="w-3.5 h-3.5 text-gray-400 hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>`;
+                btnEdit.onclick = (e) => {
+                    e.stopPropagation();
+                    renameSession(session.id);
+                };
+
+                const btnDel = document.createElement('button');
+                btnDel.innerHTML = `<svg class="w-3.5 h-3.5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>`;
+                btnDel.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteSession(session.id);
+                };
+
+                actionDiv.appendChild(btnEdit);
+                actionDiv.appendChild(btnDel);
+                
+                li.appendChild(span);
+                li.appendChild(actionDiv);
+                els.historyList.appendChild(li);
+            });
+        }
+
+        function loadSession(sessionId) {
+            if (isGenerating) return;
+            let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            const session = history.find(h => h.id === sessionId);
+            if (!session) return;
+
+            currentSessionId = session.id;
+            currentMessages = [...session.messages];
+            
+            els.chatContainer.innerHTML = '';
+            currentMessages.forEach(msg => {
+                renderMessage(msg);
+            });
+            scrollToBottom();
+            renderHistoryList();
+        }
+
+        function renameSession(id) {
+            let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            const session = history.find(h => h.id === id);
+            if (!session) return;
+            
+            const newName = prompt("Nhập tên mới cho cuộc trò chuyện:", session.title);
+            if (newName !== null && newName.trim() !== "") {
+                session.title = newName.trim();
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+                renderHistoryList();
+            }
+        }
+
+        function deleteSession(id) {
+            if(confirm("Bạn có chắc chắn muốn xóa lịch sử cuộc trò chuyện này?")) {
+                let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+                history = history.filter(h => h.id !== id);
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+                
+                if (currentSessionId === id) {
+                    startNewChat();
+                } else {
+                    renderHistoryList();
+                }
+            }
+        }
+
+        function startNewChat() {
+            if (isGenerating) return;
+            currentSessionId = Date.now().toString();
+            currentMessages = [];
+            els.chatContainer.innerHTML = `
+                <div class="text-center text-gray-400 mt-10">
+                    <svg class="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                    <p class="text-sm">Bắt đầu cuộc trò chuyện mới. Dữ liệu được lưu trữ local.</p>
+                </div>
+            `;
+            renderHistoryList();
+        }
+
+        // --- THEME (đồng bộ với hệ thống doc-hub) ---
+        (function initTheme() {
+            var saved = localStorage.getItem('doc-hub-theme');
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var theme = saved || (prefersDark ? 'dark' : 'light');
+            document.body.setAttribute('data-theme', theme);
+
+            document.addEventListener('themechange', function (e) {
+                document.body.setAttribute('data-theme', e.detail);
+            });
+
+            var themeBtn = document.getElementById('themeBtn');
+            if (themeBtn) {
+                themeBtn.addEventListener('click', function () {
+                    var next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                    document.body.setAttribute('data-theme', next);
+                    localStorage.setItem('doc-hub-theme', next);
+                });
+            }
+        })();
+
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+    </div><!-- /main-wrapper -->
+</body>
+</html>
