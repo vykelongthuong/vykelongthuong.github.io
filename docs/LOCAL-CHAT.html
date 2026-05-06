@@ -39,42 +39,42 @@
         body[data-theme="dark"] .bg-white { background-color: var(--chat-panel) !important; }
         body[data-theme="dark"] .bg-gray-100 { background-color: var(--chat-panel-2) !important; }
         body[data-theme="dark"] .bg-black\/50 { background-color: rgba(0,0,0,0.7) !important; }
-        body[data-theme="dark"] .text-gray-800 { color: var(--chat-text) !important; }
+        body[data-theme="dark"] .text-gray-800,
         body[data-theme="dark"] .text-gray-700 { color: var(--chat-text) !important; }
-        body[data-theme="dark"] .text-gray-600 { color: var(--chat-muted) !important; }
-        body[data-theme="dark"] .text-gray-500 { color: var(--chat-muted) !important; }
-        body[data-theme="dark"] .text-gray-400 { color: var(--chat-muted) !important; }
+        body[data-theme="dark"] .text-gray-600,
+        body[data-theme="dark"] .text-gray-500,
+        body[data-theme="dark"] .text-gray-400,
         body[data-theme="dark"] .text-gray-300 { color: var(--chat-muted) !important; }
-        body[data-theme="dark"] .text-blue-600 { color: var(--chat-primary) !important; }
-        body[data-theme="dark"] .text-blue-700 { color: var(--chat-primary) !important; }
-        body[data-theme="dark"] .text-blue-500 { color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .text-blue-600,
+        body[data-theme="dark"] .text-blue-700,
+        body[data-theme="dark"] .text-blue-500,
         body[data-theme="dark"] .text-blue-400 { color: var(--chat-primary) !important; }
         body[data-theme="dark"] .text-red-500 { color: #f87171 !important; }
-        body[data-theme="dark"] .border-gray-200 { border-color: var(--chat-border) !important; }
-        body[data-theme="dark"] .border-gray-300 { border-color: var(--chat-border) !important; }
+        body[data-theme="dark"] .border-gray-200,
+        body[data-theme="dark"] .border-gray-300,
         body[data-theme="dark"] .border-gray-100 { border-color: var(--chat-border) !important; }
-        body[data-theme="dark"] .border-blue-200 { border-color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .border-blue-200,
         body[data-theme="dark"] .border-blue-100 { border-color: var(--chat-primary) !important; }
         body[data-theme="dark"] .bg-blue-50 { background-color: var(--chat-primary-soft) !important; }
-        body[data-theme="dark"] .bg-blue-500 { background-color: var(--chat-primary) !important; }
-        body[data-theme="dark"] .bg-blue-600 { background-color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .bg-blue-500,
+        body[data-theme="dark"] .bg-blue-600,
         body[data-theme="dark"] .bg-blue-700 { background-color: var(--chat-primary) !important; }
         body[data-theme="dark"] .bg-emerald-500 { background-color: #5eead4 !important; }
         body[data-theme="dark"] .hover\:bg-blue-100:hover { background-color: var(--chat-primary-soft) !important; }
         body[data-theme="dark"] .hover\:bg-blue-700:hover { background-color: color-mix(in srgb, var(--chat-primary) 80%, black) !important; }
         body[data-theme="dark"] .hover\:bg-blue-800:hover { background-color: color-mix(in srgb, var(--chat-primary) 70%, black) !important; }
-        body[data-theme="dark"] .hover\:text-blue-500:hover { color: var(--chat-primary) !important; }
-        body[data-theme="dark"] .hover\:text-blue-600:hover { color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .hover\:text-blue-500:hover,
+        body[data-theme="dark"] .hover\:text-blue-600:hover,
         body[data-theme="dark"] .hover\:text-blue-700:hover { color: var(--chat-primary) !important; }
         body[data-theme="dark"] .hover\:text-red-500:hover { color: #f87171 !important; }
         body[data-theme="dark"] .hover\:bg-red-100:hover { background-color: rgba(248, 113, 113, 0.15) !important; }
-        body[data-theme="dark"] .focus\:border-blue-500:focus { border-color: var(--chat-primary) !important; }
-        body[data-theme="dark"] .focus\:ring-blue-500:focus { --tw-ring-color: var(--chat-primary) !important; }
+        body[data-theme="dark"] .focus\:border-blue-500:focus,
+        body[data-theme="dark"] .focus\:ring-blue-500:focus { --tw-ring-color: var(--chat-primary) !important; border-color: var(--chat-primary) !important; }
         body[data-theme="dark"] .bg-gradient-to-l { background-image: linear-gradient(to left, var(--chat-panel), transparent) !important; }
-        body[data-theme="dark"] .from-white { --tw-gradient-from: var(--chat-panel) !important; }
-        body[data-theme="dark"] .via-white { --tw-gradient-via: var(--chat-panel) !important; }
-        body[data-theme="dark"] .from-blue-50 { --tw-gradient-from: var(--chat-primary-soft) !important; }
-        body[data-theme="dark"] .via-blue-50 { --tw-gradient-via: var(--chat-primary-soft) !important; }
+        body[data-theme="dark"] .from-white,
+        body[data-theme="dark"] .via-white { --tw-gradient-from: var(--chat-panel) !important; --tw-gradient-via: var(--chat-panel) !important; }
+        body[data-theme="dark"] .from-blue-50,
+        body[data-theme="dark"] .via-blue-50 { --tw-gradient-from: var(--chat-primary-soft) !important; --tw-gradient-via: var(--chat-primary-soft) !important; }
 
         .theme-toggle {
             background: transparent;
@@ -117,6 +117,77 @@
         /* Tiện ích ẩn hiện nút ở History */
         .history-item .history-actions { display: none; }
         .history-item:hover .history-actions { display: flex; }
+        /* === Responsive Sidebar === */
+        #sidebar {
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            width: 256px;
+            transform: translateX(-100%);
+            transition: transform 250ms ease;
+            z-index: 40;
+        }
+        #sidebar.open { transform: translateX(0); }
+        .sidebar-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 35;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 250ms ease;
+        }
+        .sidebar-overlay.open { opacity: 1; pointer-events: auto; }
+        @media (min-width: 768px) {
+            #sidebar {
+                position: relative; top: auto; left: auto; bottom: auto;
+                width: 200px; transform: none; z-index: 10;
+            }
+            .sidebar-overlay { display: none !important; }
+        }
+        @media (min-width: 1024px) { #sidebar { width: 256px; } }
+
+        /* === Message Bubble Responsive === */
+        .msg-bubble-user { max-width: 85%; }
+        .msg-bubble-assistant { max-width: 85%; }
+        @media (min-width: 768px) {
+            .msg-bubble-user { max-width: 70%; }
+            .msg-bubble-assistant { max-width: 75%; }
+        }
+        @media (min-width: 1024px) {
+            .msg-bubble-user { max-width: 60%; }
+            .msg-bubble-assistant { max-width: 70%; }
+        }
+
+        /* === File name responsive === */
+        .file-name-label { max-width: 120px; }
+        @media (min-width: 640px) { .file-name-label { max-width: 200px; } }
+        @media (min-width: 768px) { .file-name-label { max-width: 300px; } }
+
+        /* === Message Slide Animation === */
+        .msg-slide-up { animation: msgSlideUp 0.3s ease-out; }
+        @keyframes msgSlideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .msg-slide-up, *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* === Touch-friendly targets === */
+        @media (pointer: coarse) { .touch-friendly { min-height: 44px; min-width: 44px; } }
+
+        /* === Active scale effect === */
+        .active-scale { transition: transform 100ms; }
+        .active-scale:active { transform: scale(0.95); }
+
+        /* === Modal responsive === */
+        @media (max-width: 639px) {
+            #settingsModal > div:first-child { margin-left: 8px; margin-right: 8px; max-width: none; width: calc(100% - 16px); }
+            #fileModal { padding: 8px; }
+            #fileModal > div { max-height: 95vh; }
+        }
     </style>
 </head>
 <body class="bg-gray-50 h-screen flex flex-col overflow-hidden font-sans text-gray-800 text-sm">
@@ -124,6 +195,9 @@
     <!-- Header tạm thời -->
     <header class="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2.5 flex items-center justify-between">
         <div class="flex items-center gap-2">
+            <button id="sidebarToggle" class="md:hidden text-gray-500 hover:text-blue-600 p-1.5 rounded-md hover:bg-blue-50 transition-colors active-scale" aria-label="Mở sidebar">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
             <span class="text-sm font-bold text-blue-600">Local AI Client</span>
         </div>
         <div class="text-xs text-gray-400">Chat với AI local</div>
@@ -131,13 +205,13 @@
 
     <!-- Main Content: Sidebar + Chat -->
     <div class="flex-1 flex overflow-hidden">
-    <div class="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm z-10 flex-shrink-0">
+    <div id="sidebar" class="bg-white border-r border-gray-200 flex flex-col shadow-sm flex-shrink-0">
         <div class="p-3 border-b border-gray-200 flex items-center justify-between">
             <h1 class="text-base font-bold text-blue-600 flex items-center gap-1.5">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                 Local AI
             </h1>
-            <button id="btnOpenSettings" class="text-gray-500 hover:text-blue-600 p-1.5 rounded-md hover:bg-blue-50 transition-colors" title="Cài đặt API">
+            <button id="btnOpenSettings" class="text-gray-500 hover:text-blue-600 p-1.5 rounded-md hover:bg-blue-50 transition-colors active-scale touch-friendly" title="Cài đặt API">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
             </button>
         </div>
@@ -146,7 +220,7 @@
         <div class="flex-1 overflow-y-auto p-3">
             <div class="flex justify-between items-center mb-2">
                 <h2 class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Lịch sử (5 phiên)</h2>
-                <button id="btnNewChat" class="text-blue-500 hover:text-blue-700 p-1" title="Cuộc trò chuyện mới">
+                <button id="btnNewChat" class="text-blue-500 hover:text-blue-700 p-1 active-scale touch-friendly" title="Cuộc trò chuyện mới">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 </button>
             </div>
@@ -161,10 +235,13 @@
         </div>
     </div>
 
+    <!-- Overlay đóng sidebar trên mobile -->
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
     <!-- Khu vực Chat Chính -->
     <div class="flex-1 flex flex-col bg-gray-50 relative">
         <!-- Khu vực hiển thị tin nhắn (giảm padding) -->
-        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
+        <div id="chatContainer" class="flex-1 overflow-y-auto p-3 md:p-4 lg:p-5 space-y-3 md:space-y-4">
             <div class="text-center text-gray-400 mt-10">
                 <svg class="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
                 <p class="text-sm">Bắt đầu cuộc trò chuyện mới. Dữ liệu được lưu trữ local.</p>
@@ -173,10 +250,10 @@
 
         <!-- Scroll buttons -->
         <div id="scrollBtns" class="absolute bottom-16 right-5 flex flex-col gap-2 z-20 pointer-events-none">
-            <button id="scrollTopBtn" class="pointer-events-auto w-9 h-9 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center text-gray-600 hover:text-blue-600 transition-all opacity-0 hidden" title="Lên đầu" aria-label="Lên đầu trang">
+            <button id="scrollTopBtn" class="pointer-events-auto w-9 h-9 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center text-gray-600 hover:text-blue-600 transition-all opacity-0 hidden active-scale touch-friendly" title="Lên đầu" aria-label="Lên đầu trang">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
             </button>
-            <button id="scrollBottomBtn" class="pointer-events-auto w-9 h-9 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center text-gray-600 hover:text-blue-600 transition-all opacity-0 hidden" title="Xuống cuối" aria-label="Xuống cuối trang">
+            <button id="scrollBottomBtn" class="pointer-events-auto w-9 h-9 rounded-full bg-white shadow-md border border-gray-200 flex items-center justify-center text-gray-600 hover:text-blue-600 transition-all opacity-0 hidden active-scale touch-friendly" title="Xuống cuối" aria-label="Xuống cuối trang">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
         </div>
@@ -186,9 +263,9 @@
             <!-- Hiển thị file đã chọn -->
             <div id="filePreview" class="hidden mb-2 items-center gap-2 bg-blue-50 text-blue-700 px-2 py-1.5 rounded-md text-xs border border-blue-100 inline-flex">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                <span id="fileName" class="max-w-[200px] truncate">filename.txt</span>
+                <span id="fileName" class="file-name-label truncate">filename.txt</span>
                 <span id="fileLoading" class="hidden ml-1 text-[10px] italic text-blue-400">Đang xử lý...</span>
-                <button id="btnRemoveFile" class="ml-1 text-blue-400 hover:text-blue-700">
+                <button id="btnRemoveFile" class="ml-1 text-blue-400 hover:text-blue-700 active-scale">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
@@ -202,7 +279,7 @@
                         <input type="file" id="fileInput" class="hidden" accept=".txt,.md,.json,.csv,.js,.py,.html,.css,.docx,.png,.jpg,.jpeg,.webp,.gif,.ipynb">
                     </label>
                 </div>
-                <button id="btnSend" class="bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-lg transition-colors flex-shrink-0 flex items-center justify-center w-10 h-10 shadow-sm disabled:opacity-50">
+                <button id="btnSend" class="bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-lg transition-colors flex-shrink-0 flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 shadow-sm disabled:opacity-50 active-scale touch-friendly">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                 </button>
             </div>
@@ -214,7 +291,7 @@
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col mx-4">
             <div class="p-3 border-b border-gray-200 flex justify-between items-center bg-gray-50">
                 <h3 class="font-bold text-base text-gray-700">⚙️ Cài đặt API</h3>
-                <button id="btnCloseSettings" class="text-gray-400 hover:text-red-500">
+                <button id="btnCloseSettings" class="text-gray-400 hover:text-red-500 active-scale">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
@@ -231,7 +308,7 @@
                 <hr class="border-gray-200 my-2">
                 
                 <div class="flex items-center gap-2">
-                    <button id="btnFetchModels" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold py-1.5 px-3 rounded-md text-xs transition-colors border border-blue-200">
+                    <button id="btnFetchModels" class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold py-1.5 px-3 rounded-md text-xs transition-colors border border-blue-200 active-scale">
                         🔄 Lấy danh sách Model
                     </button>
                 </div>
@@ -257,7 +334,7 @@
                 </div>
             </div>
             <div class="p-3 border-t border-gray-200 bg-gray-50 flex justify-end">
-                <button id="btnSaveSettings" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-4 rounded-md text-sm transition-colors">Đóng & Lưu</button>
+                <button id="btnSaveSettings" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-4 rounded-md text-sm transition-colors active-scale">Đóng & Lưu</button>
             </div>
         </div>
     </div>
@@ -267,7 +344,7 @@
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-full max-h-[85vh] flex flex-col">
             <div class="p-3 border-b border-gray-200 flex justify-between items-center bg-gray-100 rounded-t-xl">
                 <h3 id="fileModalTitle" class="font-bold text-sm text-gray-700 truncate pr-4">Nội dung File</h3>
-                <button id="btnCloseFileModal" class="text-gray-500 hover:text-red-500 bg-gray-200 hover:bg-red-100 p-1 rounded-md transition-colors">
+                <button id="btnCloseFileModal" class="text-gray-500 hover:text-red-500 bg-gray-200 hover:bg-red-100 p-1 rounded-md transition-colors active-scale">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
@@ -448,6 +525,26 @@
             });
             els.chatContainer.addEventListener('scroll', toggleScrollButtons);
             toggleScrollButtons();
+
+            // Sidebar toggle
+            var sidebar = document.getElementById('sidebar');
+            var sidebarOverlay = document.getElementById('sidebarOverlay');
+            document.getElementById('sidebarToggle').addEventListener('click', function () {
+                sidebar.classList.toggle('open');
+                if (sidebarOverlay) sidebarOverlay.classList.toggle('open');
+            });
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function () {
+                    sidebar.classList.remove('open');
+                    sidebarOverlay.classList.remove('open');
+                });
+            }
+            window.addEventListener('resize', function () {
+                if (window.innerWidth >= 768) {
+                    sidebar.classList.remove('open');
+                    if (sidebarOverlay) sidebarOverlay.classList.remove('open');
+                }
+            });
         }
 
         function saveSettings() {
@@ -885,18 +982,19 @@
                 els.chatContainer.innerHTML = '';
             }
 
+            const isNew = !!forceId;
             const wrapper = document.createElement('div');
             if (forceId) wrapper.id = forceId;
-            wrapper.className = `flex gap-3 ${msgObj.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`;
+            wrapper.className = `flex gap-3 ${msgObj.role === 'user' ? 'flex-row-reverse' : 'flex-row'}${isNew ? ' msg-slide-up' : ''}`;
 
             const avatarStr = msgObj.role === 'user' 
                 ? `<div class="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0 shadow-sm">U</div>`
                 : `<div class="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-sm"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>`;
 
             let innerHTML = "";
-            const bubbleClass = msgObj.role === 'user' 
-                ? 'bg-blue-600 text-white rounded-2xl rounded-tr-sm px-4 py-2 text-sm max-w-[80%]' 
-                : 'bg-white text-gray-800 rounded-2xl rounded-tl-sm px-4 py-2 text-sm shadow-sm border border-gray-100 max-w-[85%] markdown-body';
+            const bubbleClass = msgObj.role === 'user'
+                ? 'bg-blue-600 text-white rounded-2xl rounded-tr-sm px-4 py-2 text-sm msg-bubble-user'
+                : 'bg-white text-gray-800 rounded-2xl rounded-tl-sm px-4 py-2 text-sm shadow-sm border border-gray-100 msg-bubble-assistant markdown-body';
 
             if (msgObj.role === 'user') {
                 if (msgObj._uiFile) {
@@ -1093,6 +1191,12 @@
                 scrollToBottom();
                 renderHistoryList();
                 setTimeout(toggleScrollButtons, 50);
+                // Auto-close sidebar on mobile
+                if (window.innerWidth < 768) {
+                    document.getElementById('sidebar').classList.remove('open');
+                    var so = document.getElementById('sidebarOverlay');
+                    if (so) so.classList.remove('open');
+                }
             }).catch(function () {
                 // localStorage fallback
                 var oldHistory = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
@@ -1148,6 +1252,13 @@
             `;
             renderHistoryList();
             setTimeout(toggleScrollButtons, 50);
+            // Auto-close sidebar on mobile
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').style.display = '';
+                document.getElementById('sidebar').classList.remove('open');
+                var so = document.getElementById('sidebarOverlay');
+                if (so) so.classList.remove('open');
+            }
         }
 
         // --- THEME (đồng bộ với hệ thống doc-hub) ---
