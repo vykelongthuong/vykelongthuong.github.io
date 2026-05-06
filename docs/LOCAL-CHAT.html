@@ -667,7 +667,7 @@
             const data = _fileStore[fileId];
             if (!data) return;
             els.fileModalTitle.textContent = decodeURIComponent(name);
-            els.fileModalContent.textContent = data.content || '';
+            els.fileModalContent.textContent = data.content || '(Nội dung không khả dụng do đã được xóa để tiết kiệm bộ nhớ. Vui lòng upload lại file.)';
 
             // Render images if any
             els.fileModalImages.innerHTML = '';
@@ -855,7 +855,7 @@
                         const fileId = 'f' + (++_fileIdCounter);
                         _fileStore[fileId] = {
                             name: msgObj._uiFile.name,
-                            content: msgObj._uiFile.content,
+                            content: msgObj._uiFile.content || '',
                             images: msgObj._uiFile.images || null
                         };
                         const safeName = encodeURIComponent(msgObj._uiFile.name).replace(/'/g, "%27");
@@ -934,7 +934,15 @@
             const sessionData = {
                 id: currentSessionId,
                 title: existingIndex > -1 ? history[existingIndex].title : title,
-                messages: currentMessages,
+                messages: currentMessages.map(function (m) {
+                    var copy = { role: m.role, content: m.content };
+                    if (m._uiText) copy._uiText = m._uiText;
+                    if (m._uiFile) {
+                        copy._uiFile = { name: m._uiFile.name, isImage: m._uiFile.isImage };
+                        if (m._uiFile.isImage) copy._uiFile.data = m._uiFile.data;
+                    }
+                    return copy;
+                }),
                 updatedAt: Date.now()
             };
 
