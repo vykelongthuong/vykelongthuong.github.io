@@ -451,8 +451,10 @@
         let currentSessionId = Date.now().toString();
         let currentMessages = []; // Mảng chứa object {role, content, _uiText, _uiFiles}
         const TOKEN_LIMIT = 1000000;
+        const SUMMARIZE_THRESHOLD = 0.9;
         let currentTokenUsage = 0;
         let isChatFull = false;
+        let isSummarizing = false;
 
         // Trạng thái đính kèm file tạm thời (tối đa 4 file)
         const MAX_UPLOAD_FILES = 4;
@@ -553,6 +555,7 @@
                 resetTokenUsage();
                 currentSessionId = Date.now().toString();
                 saveSession();
+                await summarizeContextIfNeeded();
                 els.chatContainer.innerHTML = `
                     <div class="text-center text-gray-400 mt-10">
                         <svg class="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
@@ -922,6 +925,9 @@
         // --- XỬ LÝ CHAT & STREAMING ---
         async function sendMessage() {
             if (isGenerating) return;
+            if (isSummarizing) {
+                return alert('Đang tóm tắt ngữ cảnh để tiếp tục chat. Vui lòng chờ giây lát.');
+            }
             if (isSessionLocked) {
                 showSessionLimitAlert();
                 return;
@@ -1151,6 +1157,83 @@
 
         function scrollToBottom() {
             els.chatContainer.scrollTop = els.chatContainer.scrollHeight;
+        }
+
+        async function summarizeContextIfNeeded() {
+            if (isSummarizing || currentTokenUsage < TOKEN_LIMIT * SUMMARIZE_THRESHOLD) return;
+            if (currentMessages.length < 4) return;
+
+            isSummarizing = true;
+            els.btnSend.disabled = true;
+
+            try {
+                const conversationText = currentMessages.map(function (msg) {
+                    const role = msg.role === 'user' ? 'Người dùng' : msg.role === 'assistant' ? 'Trợ lý' : 'Hệ thống';
+                    let content = '';
+                    if (typeof msg.content === 'string') {
+                        content = msg.content;
+                    } else if (msg._uiText) {
+                        content = msg._uiText;
+                    } else {
+                        content = '[Tin nhắn có file hoặc ảnh đính kèm]';
+                    }
+                    return role + ': ' + content;
+                }).join('\n\n');
+
+                const url = getApiUrl('/chat/completions');
+                const headers = { 'Content-Type': 'application/json' };
+                if (settings.apiKey) headers.Authorization = 'Bearer ' + settings.apiKey;
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                        model: settings.modelId,
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'Bạn là trợ lý tóm tắt ngữ cảnh. Tóm tắt cuộc trò chuyện bằng tiếng Việt, ngắn gọn nhưng đủ để tiếp tục chat. Giữ lại mục tiêu, quyết định, dữ kiện quan trọng, việc đang làm dở, ràng buộc kỹ thuật và câu hỏi chưa giải quyết.'
+                            },
+                            {
+                                role: 'user',
+                                content: 'Hãy tóm tắt cuộc trò chuyện sau để tiếp tục ở context mới:\n\n' + conversationText
+                            }
+                        ],
+                        stream: false
+                    })
+                });
+
+                if (!response.ok) {
+                    console.warn('Context summary failed:', await response.text());
+                    return;
+                }
+
+                const data = await response.json();
+                const summary = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+                if (!summary) return;
+
+                const recentMessages = currentMessages.slice(-2);
+                currentMessages = [{
+                    role: 'system',
+                    content: 'Tóm tắt ngữ cảnh trước đó để tiếp tục cuộc trò chuyện:\n\n' + summary
+                }].concat(recentMessages);
+
+                currentTokenUsage = 0;
+                isChatFull = false;
+                saveSession();
+                updateTokenUI();
+
+                renderMessage({
+                    role: 'assistant',
+                    content: 'Mình đã tự động tóm tắt ngữ cảnh để tránh vượt context window. Bạn có thể tiếp tục chat trong phiên này.'
+                });
+                scrollToBottom();
+            } catch (error) {
+                console.warn('Context summary error:', error);
+            } finally {
+                isSummarizing = false;
+                updateTokenUI();
+            }
         }
 
         function updateTokenUI() {
