@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hướng dẫn sử dụng Everything Claude Code (ECC)</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <script src="../assets/js/shared.js"></script>
   <style>
     :root {
       --bg: #f7f7fb;
@@ -1045,14 +1047,7 @@ node scripts/uninstall.js</code></pre>
     const expandBtn = document.getElementById('expandBtn');
     const menuBtn = document.getElementById('menuBtn');
 
-    const savedTheme = localStorage.getItem('ecc-guide-theme');
-    if (savedTheme) document.body.dataset.theme = savedTheme;
-
-    themeButtons.forEach((btn) => btn && btn.addEventListener('click', () => {
-      const next = document.body.dataset.theme === 'dark' ? 'light' : 'dark';
-      document.body.dataset.theme = next;
-      localStorage.setItem('ecc-guide-theme', next);
-    }));
+    DocHub.initTheme(themeButtons);
 
     menuBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
     document.querySelectorAll('nav a').forEach((a) => {

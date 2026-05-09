@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Local API Chat Client</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../assets/js/shared.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- Thêm thư viện Mammoth để đọc file .docx -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -1567,25 +1569,7 @@
         }
 
         // --- THEME (đồng bộ với hệ thống doc-hub) ---
-        (function initTheme() {
-            var saved = localStorage.getItem('doc-hub-theme');
-            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-            var theme = saved || (prefersDark ? 'dark' : 'light');
-            document.body.setAttribute('data-theme', theme);
-
-            document.addEventListener('themechange', function (e) {
-                document.body.setAttribute('data-theme', e.detail);
-            });
-
-            var themeBtn = document.getElementById('themeBtn');
-            if (themeBtn) {
-                themeBtn.addEventListener('click', function () {
-                    var next = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-                    document.body.setAttribute('data-theme', next);
-                    localStorage.setItem('doc-hub-theme', next);
-                });
-            }
-        })();
+        DocHub.initTheme([document.getElementById("themeBtn")]);
 
         document.addEventListener('DOMContentLoaded', init);
 

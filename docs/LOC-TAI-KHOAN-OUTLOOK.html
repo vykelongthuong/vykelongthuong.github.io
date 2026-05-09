@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Công cụ Lọc Tài Khoản & Mật Khẩu</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../assets/js/shared.js"></script>
     <style>
         :root {
             --bg: #f8fafc;
@@ -104,18 +106,6 @@
             background-color: var(--panel) !important;
             border-color: var(--border) !important;
         }
-        .result-card .field-user {
-            background-color: var(--accent-emerald-bg) !important;
-            border-color: var(--accent-emerald-border) !important;
-        }
-        .result-card .field-pass {
-            background-color: var(--accent-rose-bg) !important;
-            border-color: var(--accent-rose-border) !important;
-        }
-        .result-card .label-user { color: var(--accent-emerald-text) !important; }
-        .result-card .label-pass { color: var(--accent-rose-text) !important; }
-        .result-card .value-user { color: var(--accent-emerald-strong) !important; }
-        .result-card .value-pass { color: var(--accent-rose-strong) !important; }
         .result-card .btn-copy-user {
             background-color: var(--panel) !important;
             border-color: var(--accent-emerald-border) !important;
@@ -126,6 +116,7 @@
             border-color: var(--accent-rose-border) !important;
             color: var(--accent-rose-text) !important;
         }
+
         body[data-theme="dark"] .result-card .status-pill {
             background-color: var(--panel-2) !important;
             color: var(--muted) !important;
@@ -145,45 +136,40 @@
             border: 1px solid var(--border);
             background: var(--panel-2);
             color: var(--text);
+            padding: 8px 16px;
             border-radius: 10px;
-            padding: 8px 14px;
             cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: all .2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
         }
         .theme-toggle:hover {
             border-color: var(--primary);
             color: var(--primary-2);
         }
 
-        @keyframes slideInUp {
-            from { transform: translateY(100%); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        @keyframes toastSlideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
+        @keyframes toastSlideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
         }
-        .toast-enter { animation: slideInUp 0.3s ease-out forwards; }
-        .toast-exit { animation: fadeOut 0.3s ease-out forwards; }
+        .toast-enter { animation: toastSlideIn 0.3s ease forwards; }
+        .toast-exit { animation: toastSlideOut 0.3s ease forwards; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800 font-sans p-4 md:p-8">
+<body class="min-h-screen p-4 md:p-8">
 
-    <div class="max-w-6xl mx-auto space-y-6">
+    <div class="max-w-6xl mx-auto">
         <!-- Header -->
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between gap-4 flex-wrap">
-            <div class="flex items-center gap-4">
-                <div class="bg-blue-100 text-blue-600 p-3 rounded-xl">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                    </svg>
-                </div>
-                <div>
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div>
+                <div class="flex items-center gap-3">
                     <h1 class="text-2xl font-bold text-slate-900">Trình Lọc Dữ Liệu Tài Khoản</h1>
-                    <p class="text-slate-500 text-sm mt-1">Tự động trích xuất Tên tài khoản và Mật khẩu từ chuỗi dữ liệu phức tạp.</p>
                 </div>
+                <p class="text-slate-500 text-sm mt-1">Tự động trích xuất Tên tài khoản và Mật khẩu từ chuỗi dữ liệu phức tạp.</p>
             </div>
             <button id="themeBtn" type="button" class="theme-toggle">Đổi theme</button>
         </div>
@@ -191,201 +177,156 @@
         <!-- Main Content -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
-            <!-- Input Section -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="font-semibold text-lg flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Dữ liệu gốc (Dán vào đây)
-                    </h2>
-                    <span id="input-count" class="text-xs font-medium bg-slate-100 text-slate-600 py-1 px-2 rounded-lg">0 dòng</span>
-                </div>
-                <textarea id="input-data" 
-                    class="w-full flex-grow min-h-[400px] p-4 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm font-mono leading-relaxed transition-all" 
-                    placeholder="Ví dụ:&#10;rohankochewaf@hotmail.com|DNjBpsj1K2|M.C554_BAY...&#10;user2@email.com|Pass123|DataRác..."></textarea>
-                <div class="mt-3 text-xs text-slate-400 flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Hệ thống tự động xử lý ngay khi bạn dán dữ liệu.
+            <!-- Input Column -->
+            <div class="flex flex-col gap-4">
+                <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 flex flex-col gap-2">
+                    <div class="flex justify-between items-center">
+                        <label class="font-semibold text-slate-800">Dữ liệu đầu vào:</label>
+                        <span id="input-count" class="text-sm font-mono px-2 py-1 rounded-md bg-blue-50 text-blue-600 font-medium">
+                            0 dòng
+                        </span>
+                    </div>
+                    <textarea id="input-data" placeholder="Dán dữ liệu của bạn vào đây..."
+                        class="w-full h-64 p-3 rounded-lg border border-slate-200 outline-none resize-none text-sm"></textarea>
                 </div>
             </div>
 
-            <!-- Output Section -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col lg:h-[calc(100vh-12rem)] min-h-[500px]">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3 shrink-0">
-                    <h2 class="font-semibold text-lg text-slate-800 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                        </svg>
-                        Danh sách Kết quả
-                    </h2>
-                    <button onclick="copyAllFormatted()" id="btn-copy-all" class="w-full sm:w-auto text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2 active:scale-95">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                        Sao chép tất cả (User|Pass)
+            <!-- Results Column -->
+            <div class="flex flex-col">
+                <div class="flex justify-between items-end mb-3">
+                    <label class="font-semibold text-slate-800">Kết quả đã lọc:</label>
+                    <button id="btn-copy-all" class="flex items-center gap-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg transition-colors">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                        Chép tất cả
                     </button>
                 </div>
-                
-                <div id="output-list" class="flex-grow overflow-y-auto space-y-3 pr-2">
-                    <div class="text-center text-slate-400 py-10 text-sm flex flex-col items-center gap-2">
-                        <svg class="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
-                        Chưa có dữ liệu. Hãy dán dữ liệu vào ô bên trái.
-                    </div>
-                </div>
+                <div id="results-container" class="flex flex-col gap-2 max-h-[70vh] overflow-y-auto"></div>
             </div>
+
         </div>
     </div>
 
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+    <!-- Toast container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-2"></div>
 
     <script>
-        // ========== THEME ==========
-        (function() {
-            var stored = localStorage.getItem('ecc-guide-theme');
-            if (stored === 'dark') {
-                document.body.setAttribute('data-theme', 'dark');
-            }
-            var btn = document.getElementById('themeBtn');
-            if (btn) {
-                btn.addEventListener('click', function() {
-                    var isDark = document.body.getAttribute('data-theme') === 'dark';
-                    var next = isDark ? 'light' : 'dark';
-                    document.body.setAttribute('data-theme', next);
-                    localStorage.setItem('ecc-guide-theme', next);
-                });
-            }
-        })();
+        // DOM elements
+        const inputArea = document.getElementById('input-data');
+        const resultsContainer = document.getElementById('results-container');
+        const inputCountBadge = document.getElementById('input-count');
+        const btnCopyAll = document.getElementById('btn-copy-all');
 
-        // ========== ACCOUNT FILTER LOGIC ==========
-        // Global variables for convenience
+        // Global state
         let currentProcessedData = [];
-        const inputData = document.getElementById('input-data');
-        const inputCount = document.getElementById('input-count');
-        const outputList = document.getElementById('output-list');
-
-        // Event Listener for automatic processing
-        inputData.addEventListener('input', processData);
-
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, 
-                tag => ({
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    "'": '&#39;',
-                    '"': '&quot;'
-                }[tag] || tag)
-            );
-        }
 
         function processData() {
-            const rawText = inputData.value;
-            const lines = rawText.split('\n');
-            
-            outputList.innerHTML = '';
-            currentProcessedData = [];
-            let validCount = 0;
-
-            if (rawText.trim() === '') {
-                outputList.innerHTML = `
-                    <div class="text-center text-slate-400 py-10 text-sm flex flex-col items-center gap-2">
-                        <svg class="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
-                        Chưa có dữ liệu. Hãy dán dữ liệu vào ô bên trái.
+            const rawText = inputArea.value.trim();
+            if (!rawText) {
+                resultsContainer.innerHTML = `
+                    <div class="text-center py-10 text-slate-400">
+                        <svg class="w-12 h-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        <p class="text-sm">Dán dữ liệu để bắt đầu lọc</p>
                     </div>`;
-                inputCount.textContent = "0 dòng";
+                inputCountBadge.textContent = "0 dòng";
+                currentProcessedData = [];
                 return;
             }
 
-            const fragment = document.createDocumentFragment();
+            const lines = rawText.split('\n');
+            inputCountBadge.textContent = `${lines.length} dòng`;
+            
+            const results = [];
+            const passwordRegex = /[A-Za-z0-9]{8,30}/;
+            const emailRegex = /[\w\.-]+@[\w\.-]+\.\w+/;
 
-            lines.forEach(line => {
-                const cleanLine = line.trim();
-                if (!cleanLine) return;
+            lines.forEach((line, idx) => {
+                const trimmed = line.trim();
+                if (!trimmed || trimmed.length < 6) return;
 
-                const parts = cleanLine.split('|');
+                let email = '';
+                const emailMatch = trimmed.match(emailRegex);
+                if (emailMatch) email = emailMatch[0];
+
+                let password = '';
+                const parts = trimmed.split(/[:\s|]+/);
                 
-                if (parts.length >= 2) {
-                    const user = parts[0].trim();
-                    const pass = parts[1].trim();
-                    
-                    if (user && pass) {
-                        currentProcessedData.push({ user, pass });
-                        const safeUser = escapeHTML(user);
-                        const safePass = escapeHTML(pass);
-                        const rowId = `item-${validCount}`;
-
-                        const div = document.createElement('div');
-                        div.className = "bg-white p-3 md:p-4 rounded-xl border border-slate-200 shadow-sm transition-all duration-300";
-                        div.id = rowId;
-                        div.dataset.userCopied = "false";
-                        div.dataset.passCopied = "false";
-
-                        div.innerHTML = `
-                            <div class="flex flex-col md:flex-row gap-3">
-                                <div class="flex-1 min-w-0 space-y-2">
-                                    <div class="flex items-center justify-between bg-emerald-50/50 border border-emerald-100 p-2 rounded-lg hover:bg-emerald-50 transition-colors gap-2">
-                                        <span class="text-xs font-semibold text-emerald-700 w-16 shrink-0">Tài khoản:</span>
-                                        <span class="font-mono text-sm text-emerald-900 truncate flex-1" title="${safeUser}">${safeUser}</span>
-                                        <button onclick="copySpecific('${safeUser.replace(/'/g, "\\'")}', this, '${rowId}', 'user')" class="shrink-0 text-xs bg-white border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 text-emerald-700 py-1.5 px-3 rounded-md font-medium transition-colors flex items-center gap-1.5 shadow-sm active:scale-95">
-                                            Chép TK
-                                        </button>
-                                    </div>
-                                    <div class="flex items-center justify-between bg-rose-50/50 border border-rose-100 p-2 rounded-lg hover:bg-rose-50 transition-colors gap-2">
-                                        <span class="text-xs font-semibold text-rose-700 w-16 shrink-0">Mật khẩu:</span>
-                                        <span class="font-mono text-sm text-rose-900 truncate flex-1" title="${safePass}">${safePass}</span>
-                                        <button onclick="copySpecific('${safePass.replace(/'/g, "\\'")}', this, '${rowId}', 'pass')" class="shrink-0 text-xs bg-white border border-rose-200 hover:bg-rose-100 hover:border-rose-300 text-rose-700 py-1.5 px-3 rounded-md font-medium transition-colors flex items-center gap-1.5 shadow-sm active:scale-95">
-                                            Chép MK
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="flex items-center justify-center md:w-28 pt-2 md:pt-0 md:pl-4 md:border-l border-slate-100 shrink-0">
-                                    <div class="status-indicator flex flex-row md:flex-col items-center justify-center gap-2">
-                                        <span class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 status-icon transition-colors">
-                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                        </span>
-                                        <span class="text-[11px] font-medium text-slate-500 status-text text-center transition-colors">Chưa xong</span>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                        fragment.appendChild(div);
-                        validCount++;
+                if (parts.length === 2 && parts[0].includes('@')) {
+                    email = parts[0];
+                    password = parts[1];
+                } else {
+                    for (const part of parts) {
+                        if (!email && part.includes('@')) {
+                            email = part;
+                        } else if (!password && passwordRegex.test(part) && !part.includes('@') && part.length >= 8) {
+                            password = part;
+                        }
                     }
+                }
+
+                if (email && password) {
+                    results.push({ email, password, originalLine: line, index: idx });
                 }
             });
 
-            if (validCount === 0 && rawText.trim() !== '') {
-                outputList.innerHTML = `<div class="text-center text-red-400 py-4 text-sm">Không tìm thấy dữ liệu hợp lệ.</div>`;
-            } else {
-                outputList.appendChild(fragment);
+            currentProcessedData = results;
+
+            if (results.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="text-center py-10 text-slate-400">
+                        <svg class="w-12 h-12 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M12 20a8 8 0 100-16 8 8 0 000 16z" /></svg>
+                        <p class="text-sm">Không tìm thấy dữ liệu hợp lệ</p>
+                    </div>`;
+                return;
             }
-            
-            inputCount.textContent = `${validCount} tài khoản`;
+
+            resultsContainer.innerHTML = results.map((item, idx) => {
+                const rowId = `row-${idx}`;
+                return `
+                <div id="${rowId}" class="result-card p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex-1 min-w-0">
+                            <span class="text-sm font-semibold text-slate-900 block truncate">${item.email}</span>
+                            <span class="text-xs text-slate-500 block truncate">${item.password}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="status-pill flex items-center gap-1.5 px-2 py-1 rounded-full bg-slate-100">
+                                <span class="status-icon w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </span>
+                                <span class="status-text text-xs text-slate-500">Chưa chép</span>
+                            </div>
+                            <button onclick="copySpecific('${item.email}', this, '${rowId}', 'user')" class="btn-copy-user px-3 py-1.5 rounded-lg border text-xs font-medium flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                User
+                            </button>
+                            <button onclick="copySpecific('${item.password}', this, '${rowId}', 'pass')" class="btn-copy-pass px-3 py-1.5 rounded-lg border text-xs font-medium flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                                Pass
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
         }
 
-        // Copy All formatted: user|pass
-        function copyAllFormatted() {
+        inputArea.addEventListener('input', processData);
+
+        btnCopyAll.addEventListener('click', () => {
             if (currentProcessedData.length === 0) {
                 showToast("Không có dữ liệu để sao chép!", "error");
                 return;
             }
 
-            const textToCopy = currentProcessedData.map(item => `${item.user}|${item.pass}`).join('\n');
+            const formatted = currentProcessedData.map(d => `${d.email}|${d.password}`).join('\n');
             const temp = document.createElement('textarea');
-            temp.value = textToCopy;
+            temp.value = formatted;
             document.body.appendChild(temp);
             temp.select();
-            
+
             try {
                 document.execCommand('copy');
-                showToast(`Đã chép tất cả ${currentProcessedData.length} tài khoản!`, "success");
+                showToast(`Đã sao chép tất cả ${currentProcessedData.length} tài khoản!`, "success");
                 
-                // Visual feedback for the "Copy All" button
                 const btn = document.getElementById('btn-copy-all');
                 const originalText = btn.innerHTML;
                 btn.innerHTML = `
@@ -402,9 +343,8 @@
                 showToast("Lỗi sao chép!", "error");
             }
             document.body.removeChild(temp);
-        }
+        });
 
-        // Copy single element
         function copySpecific(text, button, rowId, type) {
             const temp = document.createElement('textarea');
             temp.value = text;
@@ -419,7 +359,6 @@
             }
             document.body.removeChild(temp);
 
-            // UI feedback for button
             const originalText = button.textContent;
             button.textContent = 'Đã chép';
             button.classList.add('bg-slate-800', 'text-white', 'border-slate-800');
@@ -429,7 +368,6 @@
                 button.classList.remove('bg-slate-800', 'text-white', 'border-slate-800');
             }, 1500);
 
-            // Handle completion indicator
             const row = document.getElementById(rowId);
             if (row) {
                 if (type === 'user') row.dataset.userCopied = 'true';
@@ -449,7 +387,6 @@
             }
         }
 
-        // Toast System
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -464,6 +401,9 @@
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
+
+        // ========== THEME ==========
+        DocHub.initTheme([document.getElementById('themeBtn')]);
 
         processData();
     </script>
