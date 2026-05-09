@@ -6,7 +6,7 @@ window.DOCS = [
     file: 'docs/HUONG-DAN-SU-DUNG-ECC.html',
     tags: ['ECC', 'Claude Code', 'CLI', 'Tutorial'],
     updatedAt: '2026-05-04',
-    category: 'Claude',
+    category: 'Hướng dẫn',
     level: 'Beginner',
     readingTime: '20 phút'
   },
@@ -17,7 +17,7 @@ window.DOCS = [
     file: 'docs/LOC-TAI-KHOAN-OUTLOOK.html',
     tags: ['Tool', 'Utility', 'Productivity'],
     updatedAt: '2026-05-05',
-    category: 'Tool',
+    category: 'Bảo mật',
     level: 'All',
     readingTime: '1 phút'
   },
@@ -28,7 +28,7 @@ window.DOCS = [
     file: 'docs/LOCAL-CHAT.html',
     tags: ['Tool', 'Chat', 'AI', 'Utility'],
     updatedAt: '2026-05-06',
-    category: 'Tool',
+    category: 'Chat AI',
     level: 'All',
     readingTime: '1 phút'
   },
@@ -50,7 +50,7 @@ window.DOCS = [
     file: 'docs/MERGE-ACCOUNT-DS2API.html',
     tags: ['Tool', 'JSON', 'Utility', 'Account'],
     updatedAt: '2026-05-09',
-    category: 'Tool',
+    category: 'Công cụ',
     level: 'All',
     readingTime: '2 phút'
   }

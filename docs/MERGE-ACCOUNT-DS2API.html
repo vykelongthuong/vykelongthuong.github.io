@@ -25,6 +25,47 @@
         .toast-enter { animation: slideIn 0.3s forwards; }
         .toast-exit { animation: slideOut 0.3s forwards; }
     </style>
+    /* === Theme Support (đồng bộ với doc-hub-theme) === */
+    body[data-theme="dark"] { background-color: #0f172a !important; color: #e2e8f0 !important; }
+    body[data-theme="dark"] .bg-white { background-color: #1e293b !important; }
+    body[data-theme="dark"] .bg-slate-100 { background-color: #0f172a !important; }
+    body[data-theme="dark"] .text-slate-800 { color: #e2e8f0 !important; }
+    body[data-theme="dark"] .text-slate-700 { color: #cbd5e1 !important; }
+    body[data-theme="dark"] .bg-slate-50 { background-color: #1e293b !important; }
+    body[data-theme="dark"] .border-slate-300 { border-color: #334155 !important; }
+    body[data-theme="dark"] .bg-blue-600 { background-color: #1d4ed8 !important; }
+    body[data-theme="dark"] .hover\:bg-blue-700:hover { background-color: #1e3a8a !important; }
+    body[data-theme="dark"] .bg-emerald-50 { background-color: #064e3b !important; color: #6ee7b7 !important; }
+    body[data-theme="dark"] .border-emerald-300 { border-color: #047857 !important; }
+    body[data-theme="dark"] .bg-slate-200 { background-color: #334155 !important; }
+    body[data-theme="dark"] .hover\:bg-slate-300:hover { background-color: #475569 !important; }
+    body[data-theme="dark"] .text-gray-500 { color: #94a3b8 !important; }
+    body[data-theme="dark"] .text-gray-400 { color: #64748b !important; }
+    body[data-theme="dark"] .bg-gray-800 { background-color: #1e293b !important; }
+    body[data-theme="dark"] .dark\:bg-gray-800 { background-color: #1e293b !important; }
+    body[data-theme="dark"] .dark\:text-gray-400 { color: #64748b !important; }
+    body[data-theme="dark"] .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5) !important; }
+    /* Theme toggle button */
+    .theme-toggle-btn {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: white;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .theme-toggle-btn:hover { background: rgba(255,255,255,0.2); }
+    body[data-theme="dark"] .theme-toggle-btn {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.2);
+    }
+    .theme-toggle-btn .icon-sun, .theme-toggle-btn .icon-moon { width: 1.25rem; height: 1.25rem; }
+    body[data-theme="dark"] .theme-toggle-btn .icon-sun { display: none; }
+    body[data-theme="light"] .theme-toggle-btn .icon-moon { display: none; }
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-4 md:p-8">
 
@@ -37,6 +78,10 @@
                 </svg>
                 Công cụ gộp Account DS2API
             </h1>
+<button class="theme-toggle-btn" id="themeToggle" title="Đổi giao diện sáng/tối">
+  <svg class="icon-sun" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+  <svg class="icon-moon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+</button>
         </div>
 
         <!-- Main Content -->
@@ -221,5 +266,28 @@
             }, 5000);
         }
     </script>
+<script>
+(function(){
+  var KEY = 'doc-hub-theme';
+  var body = document.body;
+  function setTheme(t) {
+    body.setAttribute('data-theme', t);
+    localStorage.setItem(KEY, t);
+  }
+  var saved = localStorage.getItem(KEY);
+  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var current = saved || (prefersDark ? 'dark' : 'light');
+  body.setAttribute('data-theme', current);
+  document.getElementById('themeToggle').addEventListener('click', function(){
+    var next = body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    document.dispatchEvent(new CustomEvent('themechange', { detail: next }));
+  });
+  document.addEventListener('themechange', function(e) {
+    body.setAttribute('data-theme', e.detail);
+    localStorage.setItem(KEY, e.detail);
+  });
+})();
+</script>
 </body>
 </html>
