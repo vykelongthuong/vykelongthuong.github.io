@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minh Họa Tư Duy: Người Mù Chia Xu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .coin-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .coin {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: default;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.3);
+            transform-style: preserve-3d;
+        }
+
+        /* Đồng ngửa (Mặt ngôi sao - Màu vàng) */
+        .coin.head {
+            background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+            color: #fffbeb;
+            border: 2px solid #f59e0b;
+        }
+
+        /* Đồng sấp (Mặt người - Màu bạc/xám) */
+        .coin.tail {
+            background: linear-gradient(135deg, #94a3b8 0%, #475569 100%);
+            color: #f1f5f9;
+            border: 2px solid #64748b;
+        }
+
+        /* Hiệu ứng lật */
+        .coin.flipping {
+            transform: scale(1.2) rotateY(180deg);
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+        }
+
+        @media (min-width: 768px) {
+            .coin {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8 flex flex-col items-center">
+
+    <div class="max-w-6xl w-full space-y-6">
+        <!-- Header -->
+        <div class="text-center space-y-2 mb-8">
+            <h1 class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                Trò Chơi Trí Tuệ: Người Mù Chia Xu
+            </h1>
+            <p class="text-slate-400 text-lg">Giả lập trực quan định luật bảo toàn bù trừ trong toán học</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Khu vực tương tác (Trái) -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Bàn chính (Tất cả xu hoặc cọc lớn) -->
+                <div class="glass-panel p-6">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-600 pb-2">
+                        <h2 id="pile-main-title" class="text-xl font-bold text-blue-400">Trên Bàn (100 Đồng)</h2>
+                        <span id="pile-main-stats" class="text-sm font-mono bg-blue-900/50 px-3 py-1 rounded-full text-blue-200">
+                            Ngửa: 10 | Sấp: 90
+                        </span>
+                    </div>
+                    <div id="pile-main" class="coin-container min-h-[200px]">
+                        <!-- Coins will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Cọc nhỏ (Sau khi tách) -->
+                <div id="pile-small-container" class="glass-panel p-6 transition-all duration-500">
+                    <div class="flex justify-between items-center mb-4 border-b border-purple-600 pb-2">
+                        <h2 class="text-xl font-bold text-purple-400">Cọc Vừa Tách</h2>
+                        <span id="pile-small-stats" class="text-sm font-mono bg-purple-900/50 px-3 py-1 rounded-full text-purple-200">
+                            Ngửa: 0 | Sấp: 0
+                        </span>
+                    </div>
+                    <div id="pile-small" class="coin-container min-h-[60px]">
+                        <!-- Separated coins will appear here -->
+                    </div>
+                </div>
+
+                <!-- Bảng điều khiển Tự chơi -->
+                <div class="glass-panel p-6 flex flex-col md:flex-row flex-wrap gap-4 justify-between items-center">
+                    <div class="flex flex-col space-y-1">
+                        <span class="text-xs text-slate-400 uppercase tracking-wider font-bold">Chế độ chạm xu:</span>
+                        <div class="flex bg-slate-800 rounded-lg p-1">
+                            <button id="mode-move" onclick="setMode('move')" class="px-4 py-1.5 rounded-md bg-blue-600 text-white font-semibold transition-colors text-sm">
+                                <i class="fa-solid fa-hand-pointer mr-1"></i> Chuyển cọc
+                            </button>
+                            <button id="mode-flip" onclick="setMode('flip')" class="px-4 py-1.5 rounded-md text-slate-400 hover:text-white font-semibold transition-colors text-sm">
+                                <i class="fa-solid fa-arrows-rotate mr-1"></i> Lật xu
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button id="btn-reset" onclick="initGame()" class="px-6 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-semibold transition-colors flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i> Làm lại từ đầu
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Khu vực giải thích (Phải) -->
+            <div class="space-y-6">
+                <!-- Áp phích che giấu -->
+                <div id="hidden-solution-cover" class="glass-panel p-6 flex flex-col items-center justify-center h-full min-h-[300px] text-center space-y-4 border border-dashed border-slate-600">
+                    <i class="fa-solid fa-lock text-4xl text-slate-500"></i>
+                    <h3 class="text-xl font-bold text-slate-400">Đáp án đang bị ẩn</h3>
+                    <p class="text-sm text-slate-500">Thử thách: Bạn hãy thử tự chuyển 10 đồng sang cọc nhỏ, sau đó lật các đồng xu (theo ý muốn) sao cho số xu ngửa ở 2 cọc luôn bằng nhau!</p>
+                    <button onclick="showSolution()" class="mt-4 px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-colors shadow-lg shadow-emerald-500/30 flex items-center gap-2">
+                        <i class="fa-solid fa-eye"></i> Xem Lời Giải & Máy Giải
+                    </button>
+                </div>
+
+                <!-- Khối chứa Đáp Án (ẩn mặc định) -->
+                <div id="solution-content" class="hidden space-y-6">
+                    <!-- Khu vực máy tự giải -->
+                    <div class="glass-panel p-6 text-center space-y-4 border border-emerald-500/30">
+                        <h3 class="text-lg font-bold text-emerald-400"><i class="fa-solid fa-robot"></i> Xem máy làm mẫu</h3>
+                        <div class="flex flex-col gap-3">
+                            <button id="btn-step1" onclick="step1Separate()" class="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors shadow-lg shadow-blue-500/30 flex justify-center items-center gap-2">
+                                <i class="fa-solid fa-hand-holding"></i> Bước 1: Máy bốc mù 10 đồng
+                            </button>
+
+                            <button id="btn-step2" onclick="step2Flip()" class="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold transition-colors shadow-lg shadow-purple-500/30 flex justify-center items-center gap-2 hidden">
+                                <i class="fa-solid fa-arrows-rotate"></i> Bước 2: Máy lật cọc 10 đồng
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Thông báo kết quả -->
+                    <div id="result-alert" class="glass-panel p-6 border-l-4 border-emerald-500 hidden">
+                        <h3 class="text-xl font-bold text-emerald-400 mb-2"><i class="fa-solid fa-check-circle"></i> Kết Quả Hoàn Hảo!</h3>
+                        <p id="result-text" class="text-slate-300"></p>
+                    </div>
+
+                    <!-- Giải thích logic -->
+                    <div class="glass-panel p-6 text-slate-300 space-y-4">
+                        <h3 class="text-xl font-bold text-white border-b border-slate-600 pb-2">
+                            <i class="fa-solid fa-lightbulb text-yellow-400"></i> Tại sao lại như vậy?
+                        </h3>
+                        <p class="text-sm">Bí mật nằm ở toán học đơn giản, không cần ma thuật hay mẹo sờ tay.</p>
+                        
+                        <div class="bg-slate-800/50 p-4 rounded-lg text-sm space-y-2 border border-slate-700">
+                            <p><strong>1. Trạng thái ban đầu:</strong> Có tổng cộng <strong>10</strong> đồng ngửa.</p>
+                            <p><strong>2. Khi bốc 10 đồng:</strong> Giả sử trong 10 đồng bạn bốc ra có <span class="text-yellow-400 font-bold">X</span> đồng ngửa.</p>
+                            <p><strong>3. Hệ quả:</strong> Ở đống 90 đồng còn lại, chắc chắn số đồng ngửa sẽ là <span class="text-blue-400 font-bold">10 - X</span>.</p>
+                            <hr class="border-slate-600 my-2">
+                            <p><strong>4. Phép thuật xảy ra khi lật:</strong></p>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li>Trong cọc 10 đồng đang có <span class="text-yellow-400 font-bold">X</span> ngửa và <span class="text-slate-400 font-bold">10 - X</span> sấp.</li>
+                                <li>Khi bạn lật TOÀN BỘ cọc này, những đồng sấp sẽ biến thành ngửa.</li>
+                                <li>Tức là số đồng ngửa mới ở cọc này chính là <span class="text-purple-400 font-bold">10 - X</span>.</li>
+                            </ul>
+                        </div>
+                        <p class="text-sm font-semibold text-emerald-400 text-center mt-2">
+                            => Số ngửa cọc nhỏ (10 - X) LUÔN BẰNG số ngửa cọc lớn (10 - X).
+                        </p>
+                    </div>
+                </div> <!-- Đóng thẻ solution-content -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TOTAL_COINS = 100;
+        const TOTAL_HEADS = 10;
+        let coins = [];
+        let currentState = 'init'; // init, separated, flipped, manual
+        let touchMode = 'move'; // 'move' or 'flip'
+
+        // DOM Elements
+        const pileMainEl = document.getElementById('pile-main');
+        const pileSmallEl = document.getElementById('pile-small');
+        const pileSmallContainer = document.getElementById('pile-small-container');
+        const btnStep1 = document.getElementById('btn-step1');
+        const btnStep2 = document.getElementById('btn-step2');
+        const pileMainTitle = document.getElementById('pile-main-title');
+        const pileMainStats = document.getElementById('pile-main-stats');
+        const pileSmallStats = document.getElementById('pile-small-stats');
+        const resultAlert = document.getElementById('result-alert');
+        const resultText = document.getElementById('result-text');
+        const hiddenSolutionCover = document.getElementById('hidden-solution-cover');
+        const solutionContent = document.getElementById('solution-content');
+
+        // Chế độ thao tác thủ công
+        function setMode(mode) {
+            touchMode = mode;
+            if (mode === 'move') {
+                document.getElementById('mode-move').className = "px-4 py-1.5 rounded-md bg-blue-600 text-white font-semibold transition-colors text-sm";
+                document.getElementById('mode-flip').className = "px-4 py-1.5 rounded-md text-slate-400 hover:text-white font-semibold transition-colors text-sm";
+            } else {
+                document.getElementById('mode-flip').className = "px-4 py-1.5 rounded-md bg-blue-600 text-white font-semibold transition-colors text-sm";
+                document.getElementById('mode-move').className = "px-4 py-1.5 rounded-md text-slate-400 hover:text-white font-semibold transition-colors text-sm";
+            }
+        }
+
+        // Hiện lời giải (Mở khóa tính năng Tự động)
+        function showSolution() {
+            hiddenSolutionCover.classList.add('hidden');
+            solutionContent.classList.remove('hidden');
+        }
+
+        // Sự kiện khi người dùng tự click vào xu
+        function handleCoinClick(id) {
+            // Ngăn chặn nếu máy đang làm hiệu ứng giữa chừng
+            if (currentState === 'separated' && solutionContent.classList.contains('hidden') === false) {
+                initGame(); // Tự động dọn dẹp nếu người dùng muốn nghịch lại lúc máy đang chạy nửa chừng
+            }
+            
+            currentState = 'manual';
+            const coin = coins.find(c => c.id === id);
+            
+            if (touchMode === 'move') {
+                // Di chuyển qua lại 2 cọc
+                coin.location = coin.location === 'main' ? 'small' : 'main';
+                render();
+            } else {
+                // Lật xu
+                const el = document.getElementById(`coin-${id}`);
+                if (el) el.classList.add('flipping');
+                setTimeout(() => {
+                    coin.isHead = !coin.isHead;
+                    render();
+                }, 250);
+            }
+        }
+
+        // Tạo icon HTML dựa trên trạng thái ngửa/sấp
+        const getCoinHTML = (isHead) => {
+            if (isHead) return `<i class="fa-solid fa-star"></i>`; // Ngửa (Sao)
+            return `<i class="fa-solid fa-user"></i>`; // Sấp (Người)
+        };
+
+        // Khởi tạo trò chơi
+        function initGame() {
+            coins = [];
+            currentState = 'init';
+            
+            // Reset UI
+            resultAlert.classList.add('hidden');
+            btnStep1.classList.remove('hidden');
+            btnStep2.classList.add('hidden');
+
+            // Tạo 100 đồng xu (10 ngửa, 90 sấp)
+            for (let i = 0; i < TOTAL_COINS; i++) {
+                coins.push({
+                    id: i,
+                    isHead: i < TOTAL_HEADS, // 10 đồng đầu tiên là ngửa
+                    location: 'main' // 'main' hoặc 'small'
+                });
+            }
+
+            // Trộn ngẫu nhiên (Fisher-Yates Shuffle)
+            for (let i = coins.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [coins[i], coins[j]] = [coins[j], coins[i]];
+            }
+
+            render();
+        }
+
+        // Render xu lên màn hình
+        function render() {
+            pileMainEl.innerHTML = '';
+            pileSmallEl.innerHTML = '';
+
+            let mainHeads = 0;
+            let smallHeads = 0;
+            let mainCount = 0;
+            let smallCount = 0;
+
+            coins.forEach(coin => {
+                const coinDiv = document.createElement('div');
+                // Thêm cursor-pointer và hiệu ứng hover để biết là có thể click
+                coinDiv.className = `coin ${coin.isHead ? 'head' : 'tail'} cursor-pointer hover:scale-110`;
+                coinDiv.innerHTML = getCoinHTML(coin.isHead);
+                coinDiv.id = `coin-${coin.id}`;
+                coinDiv.onclick = () => handleCoinClick(coin.id);
+
+                if (coin.location === 'main') {
+                    pileMainEl.appendChild(coinDiv);
+                    if (coin.isHead) mainHeads++;
+                    mainCount++;
+                } else {
+                    pileSmallEl.appendChild(coinDiv);
+                    if (coin.isHead) smallHeads++;
+                    smallCount++;
+                }
+            });
+
+            // Cập nhật tự động text thống kê
+            pileMainTitle.textContent = `Bàn Chính (${mainCount} Đồng)`;
+            pileMainStats.textContent = `Ngửa: ${mainHeads} | Sấp: ${mainCount - mainHeads}`;
+            
+            pileSmallStats.textContent = `Ngửa: ${smallHeads} | Sấp: ${smallCount - smallHeads}`;
+
+            return { mainHeads, smallHeads };
+        }
+
+        // Bước 1: Bốc ngẫu nhiên 10 đồng
+        function step1Separate() {
+            // Nếu người dùng đã tự chơi (manual), khởi tạo lại từ đầu để máy làm chuẩn xác
+            if (currentState === 'manual') {
+                initGame();
+            }
+            if (currentState !== 'init') return;
+
+            // Bốc 10 đồng ngẫu nhiên từ cọc main
+            let mainCoins = coins.filter(c => c.location === 'main');
+            
+            // Xáo trộn lần nữa để đảm bảo bốc ngẫu nhiên
+            for (let i = mainCoins.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [mainCoins[i], mainCoins[j]] = [mainCoins[j], mainCoins[i]];
+            }
+
+            // Lấy 10 đồng đầu tiên chuyển sang cọc nhỏ
+            for (let i = 0; i < 10; i++) {
+                const coinToMove = coins.find(c => c.id === mainCoins[i].id);
+                coinToMove.location = 'small';
+            }
+
+            currentState = 'separated';
+            
+            // Cập nhật UI
+            btnStep1.classList.add('hidden');
+            btnStep2.classList.remove('hidden');
+
+            const stats = render();
+            
+            // Ghi log ẩn để chứng minh bước tiếp theo
+            console.log(`Bốc ra ${stats.smallHeads} đồng ngửa. Cọc lớn còn ${stats.mainHeads} đồng ngửa.`);
+        }
+
+        // Bước 2: Lật toàn bộ cọc 10 đồng
+        function step2Flip() {
+            if (currentState !== 'separated') return;
+
+            const smallCoins = coins.filter(c => c.location === 'small');
+            
+            // Thêm hiệu ứng lật CSS
+            smallCoins.forEach(c => {
+                const el = document.getElementById(`coin-${c.id}`);
+                if (el) el.classList.add('flipping');
+            });
+
+            btnStep2.disabled = true;
+            btnStep2.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang lật...';
+
+            // Đợi CSS animation chạy nửa chừng thì đổi logic và nội dung
+            setTimeout(() => {
+                smallCoins.forEach(c => {
+                    c.isHead = !c.isHead; // Thay đổi trạng thái logic
+                });
+
+                const stats = render(); // Render lại với màu sắc/icon mới
+
+                // Hiện thông báo kết quả
+                btnStep2.classList.add('hidden');
+                resultAlert.classList.remove('hidden');
+                resultText.innerHTML = `Thật kỳ diệu! Cọc lớn có <strong>${stats.mainHeads} đồng ngửa</strong>, và cọc nhỏ cũng có <strong>${stats.smallHeads} đồng ngửa</strong>. Hai bên hoàn toàn bằng nhau!`;
+
+                currentState = 'flipped';
+                btnStep2.disabled = false;
+                btnStep2.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Bước 2: Lật cọc 10 đồng';
+            }, 250); // Timeout khớp với CSS transition
+        }
+
+        // Khởi chạy khi load trang
+        window.onload = initGame;
+    </script>
+</body>
+</html>

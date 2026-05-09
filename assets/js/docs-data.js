@@ -31,5 +31,16 @@ window.DOCS = [
     category: 'Tool',
     level: 'All',
     readingTime: '1 phút'
+  },
+  {
+    id: 'nguoi-mu-chia-xu',
+    title: 'Minh Họa Tư Duy: Người Mù Chia Xu',
+    description: 'Giả lập trực quan định luật bảo toàn bù trừ trong toán học. Tương tác trực tiếp với 100 đồng xu, tự do di chuyển và lật xu để khám phá nguyên lý.',
+    file: 'docs/NGUOI-MU-CHIA-XU.html',
+    tags: ['Toán học', 'Minh họa', 'Game', 'Tương tác'],
+    updatedAt: '2026-05-09',
+    category: 'Toán học',
+    level: 'All',
+    readingTime: '10 phút'
   }
 ];
