@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DS2API Account Merger</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        textarea {
+            font-family: 'Courier New', Courier, monospace;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: auto;
+        }
+        
+        /* Toast Animation */
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        .toast-enter { animation: slideIn 0.3s forwards; }
+        .toast-exit { animation: slideOut 0.3s forwards; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden flex flex-col h-[90vh]">
+        <!-- Header -->
+        <div class="bg-blue-600 px-6 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                </svg>
+                Công cụ gộp Account DS2API
+            </h1>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6 min-h-0">
+            
+            <!-- Cột 1: Cấu hình JSON Gốc -->
+            <div class="flex flex-col gap-2">
+                <label class="font-semibold text-slate-700">1. Dán nội dung ds2api.json gốc vào đây:</label>
+                <textarea id="jsonInput" class="flex-1 w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-sm bg-slate-50" placeholder='{\n  "accounts": [\n    ...\n  ],\n  ...\n}'></textarea>
+            </div>
+
+            <!-- Cột 2: Danh sách Account mới -->
+            <div class="flex flex-col gap-2">
+                <label class="font-semibold text-slate-700">2. Dán list accounts mới (email|pass):</label>
+                <textarea id="listInput" class="flex-1 w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none text-sm bg-slate-50" placeholder="email1@hotmail.com|pass123\nemail2@outlook.com|pass456"></textarea>
+                
+                <button id="processBtn" class="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    Xử lý & Gộp dữ liệu
+                </button>
+            </div>
+
+            <!-- Cột 3: Kết quả JSON -->
+            <div class="flex flex-col gap-2">
+                <div class="flex justify-between items-end">
+                    <label class="font-semibold text-slate-700">3. Kết quả ds2api.json mới:</label>
+                    <button id="copyBtn" class="text-sm bg-slate-200 hover:bg-slate-300 text-slate-700 py-1 px-3 rounded flex items-center gap-1 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                        Sao chép
+                    </button>
+                </div>
+                <textarea id="jsonOutput" readonly class="flex-1 w-full p-3 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none resize-none text-sm bg-emerald-50" placeholder="Kết quả sẽ hiển thị ở đây..."></textarea>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2"></div>
+
+    <script>
+        // --- Xử lý Logic chính ---
+        document.getElementById('processBtn').addEventListener('click', () => {
+            const jsonRaw = document.getElementById('jsonInput').value;
+            const listRaw = document.getElementById('listInput').value;
+
+            if (!jsonRaw.trim()) {
+                showToast("Vui lòng dán nội dung file JSON gốc!", "error");
+                return;
+            }
+
+            if (!listRaw.trim()) {
+                showToast("Vui lòng dán danh sách account mới!", "error");
+                return;
+            }
+
+            try {
+                // 1. Phân tích cú pháp JSON
+                let configData = JSON.parse(jsonRaw);
+
+                // Kiểm tra xem mảng accounts có tồn tại không
+                if (!configData.accounts || !Array.isArray(configData.accounts)) {
+                    showToast("File JSON không hợp lệ: Không tìm thấy mảng 'accounts'.", "error");
+                    return;
+                }
+
+                // 2. Lấy danh sách email hiện có (sử dụng Set để tìm kiếm nhanh)
+                const existingEmails = new Set(configData.accounts.map(acc => acc.email));
+                let newAddedCount = 0;
+
+                // 3. Xử lý danh sách được dán
+                const lines = listRaw.split('\n');
+                
+                lines.forEach(line => {
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine) return; // Bỏ qua dòng trống
+
+                    // Cắt theo dấu | và lấy phần đầu tiên (email)
+                    const parts = trimmedLine.split('|');
+                    const email = parts[0].trim();
+
+                    // Kiểm tra email hợp lệ (cơ bản) và chưa tồn tại
+                    if (email && email.includes('@') && !existingEmails.has(email)) {
+                        // Thêm object mới theo định dạng yêu cầu
+                        const newAccount = {
+                            "name": email,
+                            "remark": email,
+                            "email": email,
+                            "password": email, // Yêu cầu: password là email
+                            "proxy_id": "proxy_6bdb9357da12"
+                        };
+                        
+                        configData.accounts.push(newAccount);
+                        existingEmails.add(email); // Thêm vào Set để tránh trùng lặp chính trong list dán vào
+                        newAddedCount++;
+                    }
+                });
+
+                // 4. Xuất kết quả
+                const resultJson = JSON.stringify(configData, null, 2);
+                document.getElementById('jsonOutput').value = resultJson;
+
+                if (newAddedCount > 0) {
+                    showToast(`Thành công! Đã thêm ${newAddedCount} account mới vào mảng.`, "success");
+                } else {
+                    showToast("Không có account nào được thêm. (Tất cả đã tồn tại hoặc list không hợp lệ)", "warning");
+                }
+
+            } catch (error) {
+                showToast("Lỗi phân tích cú pháp JSON! Vui lòng kiểm tra lại cấu trúc file dán vào.", "error");
+                console.error(error);
+            }
+        });
+
+        // --- Xử lý Copy ---
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            const outputText = document.getElementById('jsonOutput');
+            if (!outputText.value) {
+                showToast("Chưa có kết quả để sao chép!", "warning");
+                return;
+            }
+
+            // Copy to clipboard
+            outputText.select();
+            document.execCommand('copy');
+            
+            // Bỏ chọn
+            window.getSelection().removeAllRanges();
+            showToast("Đã sao chép nội dung JSON vào khay nhớ tạm!", "success");
+        });
+
+        // --- Hệ thống hiển thị thông báo (Toast) ---
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            // Setup màu sắc theo loại
+            let bgColor, icon;
+            switch(type) {
+                case 'success':
+                    bgColor = 'bg-emerald-500';
+                    icon = `<svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
+                    break;
+                case 'error':
+                    bgColor = 'bg-red-500';
+                    icon = `<svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>`;
+                    break;
+                case 'warning':
+                    bgColor = 'bg-amber-500';
+                    icon = `<svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`;
+                    break;
+                default:
+                    bgColor = 'bg-blue-500';
+                    icon = `<svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+            }
+
+            toast.className = `toast-enter flex items-center p-4 mb-2 w-full max-w-sm text-gray-500 bg-white rounded-lg shadow-lg dark:text-gray-400 dark:bg-gray-800 border-l-4 border-transparent overflow-hidden`;
+            
+            toast.innerHTML = `
+                <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg ${bgColor}">
+                    ${icon}
+                </div>
+                <div class="ml-3 text-sm font-normal text-slate-800">${message}</div>
+                <button type="button" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8 transition-colors" onclick="this.parentElement.remove()">
+                    <span class="sr-only">Close</span>
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                </button>
+            `;
+
+            container.appendChild(toast);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if(toast.parentElement) {
+                    toast.classList.replace('toast-enter', 'toast-exit');
+                    setTimeout(() => toast.remove(), 300); // Wait for animation
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

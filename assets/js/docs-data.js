@@ -42,5 +42,16 @@ window.DOCS = [
     category: 'Toán học',
     level: 'All',
     readingTime: '10 phút'
+  },
+  {
+    id: 'merge-account-ds2api',
+    title: 'Công cụ Gộp Account DS2API',
+    description: 'Gộp danh sách account mới vào file ds2api.json. Hỗ trợ phân tích cú pháp JSON, phát hiện trùng lặp email, xuất kết quả copy nhanh.',
+    file: 'docs/MERGE-ACCOUNT-DS2API.html',
+    tags: ['Tool', 'JSON', 'Utility', 'Account'],
+    updatedAt: '2026-05-09',
+    category: 'Tool',
+    level: 'All',
+    readingTime: '2 phút'
   }
 ];
