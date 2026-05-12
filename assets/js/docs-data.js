@@ -53,5 +53,16 @@ window.DOCS = [
     category: 'Công cụ',
     level: 'All',
     readingTime: '2 phút'
+  },
+  {
+    id: 'openspec-guide',
+    title: 'Hướng dẫn OpenSpec với Claude CLI cho người mới',
+    description: 'Tài liệu tiếng Việt dễ hiểu về OpenSpec: từ cài đặt, quy trình làm việc, trọn bộ lệnh /opsx, đến ví dụ thực tế và checklist hằng ngày.',
+    file: 'docs/OPEN-SPEC.html',
+    tags: ['OpenSpec', 'Claude Code', 'CLI', 'Tutorial', 'Beginner'],
+    updatedAt: '2026-05-12',
+    category: 'Hướng dẫn',
+    level: 'Beginner',
+    readingTime: '25 phút'
   }
 ];

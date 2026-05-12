@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hướng dẫn OpenSpec với Claude CLI cho người mới bắt đầu</title>
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --border: #dbe3ef;
+      --code-bg: #111827;
+      --code-text: #e5e7eb;
+      --good-bg: #ecfdf5;
+      --good-border: #10b981;
+      --warn-bg: #fff7ed;
+      --warn-border: #f97316;
+      --info-bg: #eff6ff;
+      --info-border: #3b82f6;
+      --danger-bg: #fef2f2;
+      --danger-border: #ef4444;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+      color: #fff;
+      padding: 42px 22px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0 0 12px;
+      font-size: clamp(28px, 4vw, 48px);
+      line-height: 1.15;
+    }
+
+    header p {
+      max-width: 900px;
+      margin: 0 auto;
+      font-size: 18px;
+      opacity: 0.95;
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 28px 18px 60px;
+    }
+
+    nav, section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 22px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #111827;
+      font-size: 28px;
+      border-bottom: 2px solid #eef2ff;
+      padding-bottom: 8px;
+    }
+
+    h3 {
+      margin-top: 28px;
+      color: #1f2937;
+      font-size: 22px;
+    }
+
+    h4 {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+
+    a { color: var(--primary); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .toc {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+      padding-left: 0;
+      list-style: none;
+      margin: 0;
+    }
+
+    .toc li a {
+      display: block;
+      padding: 12px 14px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: #1f2937;
+      font-weight: 700;
+    }
+
+    .box {
+      border-left: 5px solid var(--info-border);
+      background: var(--info-bg);
+      padding: 16px 18px;
+      border-radius: 12px;
+      margin: 18px 0;
+    }
+
+    .box.good { background: var(--good-bg); border-left-color: var(--good-border); }
+    .box.warn { background: var(--warn-bg); border-left-color: var(--warn-border); }
+    .box.danger { background: var(--danger-bg); border-left-color: var(--danger-border); }
+
+    code {
+      font-family: Consolas, Monaco, 'Courier New', monospace;
+      background: #eef2ff;
+      color: #1e3a8a;
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-size: 0.95em;
+    }
+
+    pre {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 16px;
+      border-radius: 14px;
+      overflow-x: auto;
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 18px 0;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #eef2ff;
+      color: #111827;
+    }
+
+    tr:nth-child(even) td { background: #f8fafc; }
+
+    .step {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 14px;
+      margin: 18px 0;
+      align-items: start;
+    }
+
+    .num {
+      background: var(--primary);
+      color: white;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .command-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      margin: 14px 0;
+      background: #fff;
+    }
+
+    .command-card h4 {
+      margin-top: 0;
+      color: var(--primary-dark);
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-weight: bold;
+      margin-left: 6px;
+    }
+
+    .flow {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 18px 0;
+    }
+
+    .flow span {
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    .arrow { color: var(--muted); font-weight: bold; }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      padding: 30px 16px;
+      font-size: 14px;
+    }
+
+    @media print {
+      body { background: #fff; }
+      nav, section { box-shadow: none; break-inside: avoid; }
+      header { background: #1d4ed8; }
+      a { color: #111827; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Hướng dẫn OpenSpec với Claude CLI</h1>
+    <p>Bản dễ hiểu cho người mới bắt đầu, kể cả người chưa biết lập trình. Tài liệu này giải thích OpenSpec dùng để làm gì, gõ lệnh ở đâu, từng lệnh có ý nghĩa gì và cách dùng trong một dự án thật.</p>
+  </header>
+
+  <main>
+    <nav>
+      <h2>Mục lục</h2>
+      <ul class="toc">
+        <li><a href="#tong-quan">1. Hiểu thật đơn giản</a></li>
+        <li><a href="#can-co">2. Bạn cần chuẩn bị gì?</a></li>
+        <li><a href="#cai-dat">3. Cài đặt từng bước</a></li>
+        <li><a href="#go-lenh-o-dau">4. Gõ lệnh ở đâu?</a></li>
+        <li><a href="#workflow">5. Quy trình làm việc dễ nhớ</a></li>
+        <li><a href="#slash-commands">6. Trọn bộ lệnh /opsx</a></li>
+        <li><a href="#terminal-commands">7. Lệnh terminal openspec</a></li>
+        <li><a href="#vi-du">8. Ví dụ thực tế từ đầu đến cuối</a></li>
+        <li><a href="#prompt-mau">9. Mẫu câu lệnh nên dùng</a></li>
+        <li><a href="#loi-thuong-gap">10. Lỗi thường gặp</a></li>
+        <li><a href="#checklist">11. Checklist sử dụng hằng ngày</a></li>
+      </ul>
+    </nav>
+
+    <section id="tong-quan">
+      <h2>1. Hiểu thật đơn giản</h2>
+      <p><strong>Claude CLI</strong> là công cụ để bạn trò chuyện với Claude ngay trong terminal, rồi nhờ Claude đọc code, sửa code, tạo file, chạy lệnh và hỗ trợ lập trình.</p>
+      <p><strong>OpenSpec</strong> là công cụ giúp Claude làm việc có kế hoạch hơn. Thay vì bạn nói “thêm tính năng này đi” rồi Claude tự đoán, OpenSpec bắt Claude viết ra trước:</p>
+      <ul>
+        <li>Muốn làm gì?</li>
+        <li>Vì sao cần làm?</li>
+        <li>Thiết kế dự kiến ra sao?</li>
+        <li>Cần sửa những phần nào?</li>
+        <li>Danh sách việc cần làm gồm những bước nào?</li>
+      </ul>
+      <div class="box good">
+        <strong>Nói ngắn gọn:</strong> OpenSpec giống như “bản kế hoạch” trước khi cho Claude viết code. Nó giúp giảm lỗi, giảm hiểu nhầm và dễ kiểm tra lại sau này.
+      </div>
+
+      <h3>Ví dụ đời thường</h3>
+      <p>Nếu bạn thuê thợ sửa nhà, bạn không nên chỉ nói “sửa nhà cho đẹp”. Bạn nên có bản mô tả: sửa phòng nào, màu gì, vật liệu gì, làm xong cần đạt tiêu chuẩn gì. OpenSpec cũng vậy, nhưng áp dụng cho dự án phần mềm.</p>
+
+      <h3>Khi nào nên dùng OpenSpec?</h3>
+      <table>
+        <tr>
+          <th>Tình huống</th>
+          <th>Có nên dùng OpenSpec?</th>
+          <th>Lý do</th>
+        </tr>
+        <tr>
+          <td>Sửa một lỗi nhỏ, ví dụ sai chính tả trong giao diện</td>
+          <td>Không bắt buộc</td>
+          <td>Có thể yêu cầu Claude sửa trực tiếp.</td>
+        </tr>
+        <tr>
+          <td>Thêm tính năng đăng nhập, thanh toán, quản lý người dùng</td>
+          <td>Nên dùng</td>
+          <td>Đây là thay đổi lớn, cần kế hoạch rõ ràng.</td>
+        </tr>
+        <tr>
+          <td>Refactor code, đổi cấu trúc dự án</td>
+          <td>Rất nên dùng</td>
+          <td>Dễ ảnh hưởng nhiều file, cần kiểm soát.</td>
+        </tr>
+        <tr>
+          <td>Chưa hiểu dự án đang hoạt động thế nào</td>
+          <td>Nên dùng lệnh explore</td>
+          <td>Để Claude phân tích trước, chưa sửa code vội.</td>
+        </tr>
+      </table>
+    </section>
+
+    <section id="can-co">
+      <h2>2. Bạn cần chuẩn bị gì?</h2>
+      <p>Đừng lo nếu bạn chưa biết lập trình nhiều. Bạn chỉ cần hiểu vài khái niệm cơ bản sau:</p>
+      <table>
+        <tr>
+          <th>Khái niệm</th>
+          <th>Hiểu đơn giản</th>
+        </tr>
+        <tr>
+          <td>Terminal / Command Prompt</td>
+          <td>Cửa sổ để gõ lệnh cho máy tính.</td>
+        </tr>
+        <tr>
+          <td>Project</td>
+          <td>Thư mục chứa toàn bộ code của website/app/phần mềm.</td>
+        </tr>
+        <tr>
+          <td>Claude CLI</td>
+          <td>Nơi bạn chat với Claude trong terminal.</td>
+        </tr>
+        <tr>
+          <td>OpenSpec</td>
+          <td>Bộ công cụ giúp Claude lập kế hoạch trước khi code.</td>
+        </tr>
+        <tr>
+          <td>Spec</td>
+          <td>Bản đặc tả: mô tả tính năng phải hoạt động như thế nào.</td>
+        </tr>
+        <tr>
+          <td>Change</td>
+          <td>Một thay đổi cụ thể trong dự án, ví dụ “thêm đăng nhập Google”.</td>
+        </tr>
+      </table>
+
+      <h3>Phần mềm cần có</h3>
+      <ul>
+        <li><strong>Node.js</strong>: nên dùng phiên bản 20.19.0 trở lên.</li>
+        <li><strong>npm</strong>: thường đi kèm khi cài Node.js.</li>
+        <li><strong>Claude CLI / Claude Code</strong>: công cụ bạn đang dùng để coding.</li>
+        <li><strong>OpenSpec</strong>: sẽ cài bằng npm ở bước tiếp theo.</li>
+      </ul>
+    </section>
+
+    <section id="cai-dat">
+      <h2>3. Cài đặt từng bước</h2>
+
+      <div class="step">
+        <div class="num">1</div>
+        <div class="step-content">
+          <h3>Kiểm tra Node.js</h3>
+          <p>Mở terminal và gõ:</p>
+          <pre><code>node -v</code></pre>
+          <p>Nếu hiện ra ví dụ <code>v20.19.0</code>, <code>v21.x</code>, <code>v22.x</code> là ổn. Nếu máy báo không nhận lệnh <code>node</code>, bạn cần cài Node.js trước.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">2</div>
+        <div class="step-content">
+          <h3>Cài OpenSpec</h3>
+          <p>Gõ lệnh sau trong terminal:</p>
+          <pre><code>npm install -g @fission-ai/openspec@latest</code></pre>
+          <p>Lệnh này cài OpenSpec trên máy để bạn có thể dùng lệnh <code>openspec</code>.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">3</div>
+        <div class="step-content">
+          <h3>Đi vào thư mục dự án</h3>
+          <p>Ví dụ dự án của bạn nằm ở Desktop:</p>
+          <pre><code>cd Desktop/ten-du-an-cua-ban</code></pre>
+          <div class="box warn">
+            <strong>Lưu ý:</strong> Bạn phải đứng đúng trong thư mục dự án trước khi chạy OpenSpec. Nếu chạy nhầm thư mục, OpenSpec sẽ tạo file nhầm chỗ.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">4</div>
+        <div class="step-content">
+          <h3>Khởi tạo OpenSpec cho Claude</h3>
+          <pre><code>openspec init --tools claude</code></pre>
+          <p>Lệnh này sẽ tạo cấu hình để Claude CLI hiểu các lệnh dạng <code>/opsx:propose</code>, <code>/opsx:apply</code>, <code>/opsx:archive</code>.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">5</div>
+        <div class="step-content">
+          <h3>Mở Claude CLI trong dự án</h3>
+          <pre><code>claude</code></pre>
+          <p>Sau khi vào Claude CLI, bạn bắt đầu gõ các lệnh <code>/opsx</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="go-lenh-o-dau">
+      <h2>4. Gõ lệnh ở đâu?</h2>
+      <p>Có 2 nơi khác nhau, người mới rất dễ nhầm:</p>
+
+      <table>
+        <tr>
+          <th>Nơi gõ</th>
+          <th>Dùng để làm gì?</th>
+          <th>Ví dụ</th>
+        </tr>
+        <tr>
+          <td><strong>Terminal bình thường</strong></td>
+          <td>Cài đặt, kiểm tra, khởi tạo OpenSpec.</td>
+          <td><code>npm install -g @fission-ai/openspec@latest</code><br><code>openspec init --tools claude</code></td>
+        </tr>
+        <tr>
+          <td><strong>Bên trong Claude CLI</strong></td>
+          <td>Ra lệnh cho Claude phân tích, lập kế hoạch, viết code.</td>
+          <td><code>/opsx:propose thêm trang đăng nhập</code><br><code>/opsx:apply</code></td>
+        </tr>
+      </table>
+
+      <div class="box danger">
+        <strong>Đừng nhầm:</strong> Lệnh bắt đầu bằng <code>openspec</code> thường gõ ở terminal. Lệnh bắt đầu bằng <code>/opsx:</code> gõ trong Claude CLI.
+      </div>
+    </section>
+
+    <section id="workflow">
+      <h2>5. Quy trình làm việc dễ nhớ</h2>
+      <p>Với người mới, bạn chỉ cần nhớ quy trình 4 bước này:</p>
+
+      <div class="flow">
+        <span>/opsx:explore</span>
+        <span class="arrow">→</span>
+        <span>/opsx:propose</span>
+        <span class="arrow">→</span>
+        <span>/opsx:apply</span>
+        <span class="arrow">→</span>
+        <span>/opsx:archive</span>
+      </div>
+
+      <table>
+        <tr>
+          <th>Bước</th>
+          <th>Dùng lệnh</th>
+          <th>Ý nghĩa dễ hiểu</th>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td><code>/opsx:explore</code></td>
+          <td>Nhờ Claude tìm hiểu dự án trước, chưa sửa code.</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><code>/opsx:propose</code></td>
+          <td>Nhờ Claude tạo bản kế hoạch/spec cho thay đổi.</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><code>/opsx:apply</code></td>
+          <td>Cho Claude bắt đầu sửa code theo kế hoạch.</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><code>/opsx:archive</code></td>
+          <td>Hoàn tất thay đổi, lưu lại lịch sử.</td>
+        </tr>
+      </table>
+
+      <div class="box good">
+        <strong>Công thức an toàn:</strong> Nếu thay đổi lớn, đừng bảo Claude “code luôn”. Hãy dùng <code>/opsx:propose</code> trước để Claude viết kế hoạch cho bạn duyệt.
+      </div>
+    </section>
+
+    <section id="slash-commands">
+      <h2>6. Trọn bộ lệnh /opsx trong Claude CLI</h2>
+      <p>Các lệnh dưới đây được gõ trong Claude CLI, không phải terminal thường.</p>
+
+      <h3>Nhóm lệnh cốt lõi nên biết</h3>
+
+      <div class="command-card">
+        <h4>/opsx:explore <span class="badge">Phân tích trước</span></h4>
+        <p><strong>Dùng khi:</strong> Bạn chưa hiểu dự án, chưa chắc nên làm thế nào, hoặc muốn Claude đọc code trước.</p>
+        <p><strong>Lệnh mẫu:</strong></p>
+        <pre><code>/opsx:explore dự án này đang xử lý đăng nhập như thế nào?</code></pre>
+        <pre><code>/opsx:explore tôi muốn thêm trang quản lý sản phẩm, hãy phân tích cách làm phù hợp</code></pre>
+        <p><strong>Kết quả mong đợi:</strong> Claude giải thích hiện trạng, đề xuất hướng làm, chưa tạo kế hoạch chính thức và chưa sửa code.</p>
+      </div>
+
+      <div class="command-card">
+        <h4>/opsx:propose <span class="badge">Tạo kế hoạch</span></h4>
+        <p><strong>Dùng khi:</strong> Bạn đã có ý tưởng muốn thêm/sửa một tính năng và muốn Claude viết kế hoạch rõ ràng.</p>
+        <p><strong>Lệnh mẫu:</strong></p>
+        <pre><code>/opsx:propose thêm chức năng đăng nhập bằng Google</code></pre>
+        <pre><code>/opsx:propose tạo trang dashboard hiển thị doanh thu theo ngày</code></pre>
+        <p><strong>Kết quả mong đợi:</strong> Claude tạo một thư mục thay đổi trong <code>openspec/changes/</code>, thường gồm proposal, design, tasks và spec.</p>
+        <div class="box warn">
+          Sau khi chạy <code>/opsx:propose</code>, bạn nên đọc lại kế hoạch trước khi cho Claude code. Nếu sai, yêu cầu Claude sửa spec trước.
+        </div>
+      </div>
+
+      <div class="command-card">
+        <h4>/opsx:apply <span class="badge">Bắt đầu code</span></h4>
+        <p><strong>Dùng khi:</strong> Bạn đã xem kế hoạch và đồng ý để Claude sửa code.</p>
+        <p><strong>Lệnh mẫu:</strong></p>
+        <pre><code>/opsx:apply</code></pre>
+        <p><strong>Kết quả mong đợi:</strong> Claude đọc task, sửa code từng bước, đánh dấu task đã hoàn thành.</p>
+        <div class="box danger">
+          Không nên dùng <code>/opsx:apply</code> khi bạn chưa đọc kế hoạch, nhất là với tính năng lớn.
+        </div>
+      </div>
+
+      <div class="command-card">
+        <h4>/opsx:sync <span class="badge">Đồng bộ spec</span></h4>
+        <p><strong>Dùng khi:</strong> Code đã thay đổi và bạn muốn cập nhật spec chính để phản ánh trạng thái mới của dự án.</p>
+        <p><strong>Lệnh mẫu:</strong></p>
+        <pre><code>/opsx:sync</code></pre>
+        <p><strong>Kết quả mong đợi:</strong> Các thay đổi trong spec được đưa vào phần spec chính của dự án.</p>
+      </div>
+
+      <div class="command-card">
+        <h4>/opsx:archive <span class="badge">Hoàn tất</span></h4>
+        <p><strong>Dùng khi:</strong> Tính năng đã code xong, bạn đã kiểm tra và muốn đóng change lại.</p>
+        <p><strong>Lệnh mẫu:</strong></p>
+        <pre><code>/opsx:archive</code></pre>
+        <p><strong>Kết quả mong đợi:</strong> Change được chuyển vào khu vực archive để lưu lịch sử. Đây là bước kết thúc gọn gàng.</p>
+      </div>
+
+      <h3>Nhóm lệnh mở rộng</h3>
+      <p>Không phải lúc nào cũng cần dùng các lệnh này. Người mới có thể đọc để biết, khi quen hơn hãy dùng.</p>
+
+      <div class="command-card">
+        <h4>/opsx:new <span class="badge">Tạo nhanh change</span></h4>
+        <p><strong>Dùng khi:</strong> Bạn muốn bắt đầu một change mới theo workflow mở rộng. Một số cấu hình OpenSpec có thể dùng lệnh này để tạo bộ khung ban đầu.</p>
+        <pre><code>/opsx:new add-product-search</code></pre>
+      </div>
+
+      <div class="command-card">
+        <h4>/opsx:continue <span class="badge">Tiếp tục việc đang làm</span></h4>
+        <p><strong>Dùng khi:</strong> Bạn đang làm dở một change, đóng Claude hoặc nghỉ giữa chừng, sau đó muốn Claude tiếp tục.</p>
+        <pre><code>/opsx:continue</code></pre>
+        <p><strong>Mẹo:</strong> Trước khi tiếp tục, có thể nói: “Hãy đọc lại tasks.md và cho tôi biết bước tiếp theo là gì.”</p>
+      </div>
+
+      <div class="command-card">
+        <h4>/opsx:ff <span class="badge">Fast-forward</span></h4>
+        <p><strong>Dùng khi:</strong> Bạn muốn Claude tiến nhanh qua một số bước trong workflow. Lệnh này phù hợp hơn cho người đã quen.</p>
+        <pre><code>/opsx:ff</code></pre>
+        <div class="box warn">
+          Người mới không cần dùng lệnh này thường xuyên. Hãy dùng workflow chậm nhưng chắc: propose → apply → archive.
+        </div>
+      </div>
+
+      <div class="command-card">
+        <h4>/opsx:verify <span class="badge">Kiểm tra lại</span></h4>
+        <p><strong>Dùng khi:</strong> Sau khi Claude code xong, bạn muốn kiểm tra code có khớp với spec, design và tasks không.</p>
+        <pre><code>/opsx:verify</code></pre>
+        <p><strong>Kết quả mong đợi:</strong> Claude rà soát xem còn thiếu task, thiếu test, hoặc làm lệch yêu cầu không.</p>
+      </div>
+
+      <div class="command-card">
+        <h4>/opsx:bulk-archive <span class="badge">Lưu nhiều change</span></h4>
+        <p><strong>Dùng khi:</strong> Dự án có nhiều change đã xong và bạn muốn archive hàng loạt.</p>
+        <pre><code>/opsx:bulk-archive</code></pre>
+        <p><strong>Khuyến nghị:</strong> Người mới nên archive từng change bằng <code>/opsx:archive</code> để dễ kiểm soát.</p>
+      </div>
+
+      <div class="command-card">
+        <h4>/opsx:onboard <span class="badge">Làm quen dự án</span></h4>
+        <p><strong>Dùng khi:</strong> Bạn mới mở một dự án, chưa hiểu code, muốn Claude phân tích tổng quan.</p>
+        <pre><code>/opsx:onboard</code></pre>
+        <p><strong>Kết quả mong đợi:</strong> Claude giúp bạn hiểu cấu trúc dự án, công nghệ dùng, cách chạy, những phần quan trọng.</p>
+      </div>
+    </section>
+
+    <section id="terminal-commands">
+      <h2>7. Lệnh terminal openspec</h2>
+      <p>Các lệnh này gõ ở terminal bình thường, không phải trong Claude chat.</p>
+
+      <table>
+        <tr>
+          <th>Lệnh</th>
+          <th>Dùng để làm gì?</th>
+          <th>Khi nào dùng?</th>
+        </tr>
+        <tr>
+          <td><code>openspec init --tools claude</code></td>
+          <td>Khởi tạo OpenSpec cho Claude CLI.</td>
+          <td>Khi mới thêm OpenSpec vào dự án.</td>
+        </tr>
+        <tr>
+          <td><code>openspec list</code></td>
+          <td>Xem danh sách change/spec.</td>
+          <td>Khi muốn biết đang có những thay đổi nào.</td>
+        </tr>
+        <tr>
+          <td><code>openspec status</code></td>
+          <td>Xem trạng thái hiện tại của OpenSpec.</td>
+          <td>Khi không chắc change nào đang mở, cái nào đã xong.</td>
+        </tr>
+        <tr>
+          <td><code>openspec validate --all</code></td>
+          <td>Kiểm tra toàn bộ spec có hợp lệ không.</td>
+          <td>Trước khi commit, trước khi archive, hoặc khi thấy lỗi lạ.</td>
+        </tr>
+        <tr>
+          <td><code>openspec view</code></td>
+          <td>Xem nội dung spec/change trong terminal.</td>
+          <td>Khi muốn đọc nhanh mà không mở editor.</td>
+        </tr>
+        <tr>
+          <td><code>openspec update</code></td>
+          <td>Cập nhật OpenSpec hoặc cấu hình liên quan.</td>
+          <td>Khi muốn dùng bản mới hoặc sau khi nâng cấp tool.</td>
+        </tr>
+      </table>
+
+      <h3>Ví dụ dùng terminal</h3>
+      <pre><code>cd Desktop/my-project
+openspec status
+openspec validate --all</code></pre>
+    </section>
+
+    <section id="vi-du">
+      <h2>8. Ví dụ thực tế từ đầu đến cuối</h2>
+      <p>Giả sử bạn có một website bán hàng và muốn thêm chức năng tìm kiếm sản phẩm.</p>
+
+      <h3>Bước 1: Mở terminal, vào dự án</h3>
+      <pre><code>cd Desktop/shop-app</code></pre>
+
+      <h3>Bước 2: Nếu chưa cài OpenSpec cho dự án</h3>
+      <pre><code>openspec init --tools claude</code></pre>
+
+      <h3>Bước 3: Mở Claude CLI</h3>
+      <pre><code>claude</code></pre>
+
+      <h3>Bước 4: Nhờ Claude phân tích trước</h3>
+      <pre><code>/opsx:explore dự án này đang hiển thị danh sách sản phẩm như thế nào? Tôi muốn thêm ô tìm kiếm sản phẩm.</code></pre>
+
+      <p>Sau bước này, Claude sẽ đọc code và giải thích. Bạn chưa cho Claude sửa code.</p>
+
+      <h3>Bước 5: Tạo kế hoạch chính thức</h3>
+      <pre><code>/opsx:propose thêm ô tìm kiếm sản phẩm theo tên, cập nhật kết quả ngay khi người dùng nhập</code></pre>
+
+      <p>Sau khi Claude tạo kế hoạch, bạn nên yêu cầu:</p>
+      <pre><code>Hãy tóm tắt proposal, design và tasks bằng tiếng Việt dễ hiểu. Chưa sửa code.</code></pre>
+
+      <h3>Bước 6: Nếu kế hoạch chưa đúng, yêu cầu sửa</h3>
+      <pre><code>Sửa lại spec: chỉ tìm kiếm theo tên sản phẩm, chưa cần tìm theo mô tả hoặc danh mục.</code></pre>
+
+      <h3>Bước 7: Cho Claude code</h3>
+      <pre><code>/opsx:apply</code></pre>
+
+      <h3>Bước 8: Bảo Claude kiểm tra</h3>
+      <pre><code>Chạy lint, test hoặc build nếu dự án có hỗ trợ. Nếu có lỗi thì sửa.</code></pre>
+
+      <h3>Bước 9: Kiểm tra lại bằng verify nếu có</h3>
+      <pre><code>/opsx:verify</code></pre>
+
+      <h3>Bước 10: Hoàn tất</h3>
+      <pre><code>/opsx:archive</code></pre>
+
+      <div class="box good">
+        Sau quy trình này, bạn có code đã sửa, có kế hoạch lưu lại, có task đã hoàn thành và có lịch sử thay đổi rõ ràng.
+      </div>
+    </section>
+
+    <section id="prompt-mau">
+      <h2>9. Mẫu câu lệnh nên dùng</h2>
+      <p>Bạn có thể copy các mẫu dưới đây và đổi nội dung theo dự án của mình.</p>
+
+      <h3>Khi chưa hiểu dự án</h3>
+      <pre><code>/opsx:explore hãy đọc dự án này và giải thích cấu trúc chính bằng tiếng Việt dễ hiểu cho người mới</code></pre>
+
+      <h3>Khi muốn thêm tính năng</h3>
+      <pre><code>/opsx:propose thêm chức năng [mô tả tính năng], yêu cầu giải thích rõ proposal, design và tasks bằng tiếng Việt</code></pre>
+
+      <h3>Khi muốn sửa lỗi</h3>
+      <pre><code>/opsx:propose sửa lỗi [mô tả lỗi], trước tiên hãy tìm nguyên nhân, sau đó đề xuất cách sửa an toàn</code></pre>
+
+      <h3>Khi muốn Claude chưa code vội</h3>
+      <pre><code>Chỉ phân tích và lập kế hoạch, chưa sửa file, chưa chạy lệnh thay đổi hệ thống.</code></pre>
+
+      <h3>Khi muốn Claude giải thích dễ hiểu</h3>
+      <pre><code>Giải thích từng bước bằng tiếng Việt đơn giản, giả sử tôi là người mới học lập trình.</code></pre>
+
+      <h3>Khi muốn kiểm tra trước khi hoàn tất</h3>
+      <pre><code>Hãy so sánh code hiện tại với tasks.md và spec, liệt kê phần nào đã xong, phần nào còn thiếu.</code></pre>
+    </section>
+
+    <section id="loi-thuong-gap">
+      <h2>10. Lỗi thường gặp và cách xử lý</h2>
+
+      <h3>1. Gõ <code>/opsx:propose</code> nhưng Claude không hiểu</h3>
+      <p><strong>Nguyên nhân có thể:</strong> Bạn chưa chạy <code>openspec init --tools claude</code>, hoặc đang mở Claude ở sai thư mục.</p>
+      <p><strong>Cách xử lý:</strong></p>
+      <pre><code>cd duong-dan-den-du-an
+openspec init --tools claude
+claude</code></pre>
+
+      <h3>2. Lệnh <code>openspec</code> không chạy</h3>
+      <p><strong>Nguyên nhân có thể:</strong> Chưa cài OpenSpec hoặc npm global path chưa đúng.</p>
+      <p><strong>Cách xử lý:</strong></p>
+      <pre><code>npm install -g @fission-ai/openspec@latest
+openspec --help</code></pre>
+
+      <h3>3. Lệnh <code>node -v</code> báo lỗi</h3>
+      <p><strong>Nguyên nhân:</strong> Máy chưa cài Node.js hoặc cài chưa đúng.</p>
+      <p><strong>Cách xử lý:</strong> Cài Node.js bản mới, sau đó mở lại terminal và chạy lại <code>node -v</code>.</p>
+
+      <h3>4. Claude sửa code không đúng ý</h3>
+      <p><strong>Nguyên nhân:</strong> Spec hoặc yêu cầu ban đầu chưa đủ rõ.</p>
+      <p><strong>Cách xử lý:</strong> Dừng lại, yêu cầu Claude sửa spec/task trước:</p>
+      <pre><code>Sửa lại spec: [mô tả yêu cầu đúng]. Chưa code tiếp cho đến khi tôi đồng ý.</code></pre>
+
+      <h3>5. Dự án có nhiều change, không biết đang làm cái nào</h3>
+      <p><strong>Cách xử lý:</strong> Ở terminal chạy:</p>
+      <pre><code>openspec status
+openspec list</code></pre>
+      <p>Hoặc trong Claude hỏi:</p>
+      <pre><code>Hãy đọc thư mục openspec/changes và cho tôi biết change nào đang mở, change nào có vẻ đã xong.</code></pre>
+    </section>
+
+    <section id="checklist">
+      <h2>11. Checklist sử dụng hằng ngày</h2>
+      <p>Mỗi khi làm một tính năng mới, hãy đi theo checklist này:</p>
+      <table>
+        <tr>
+          <th>Đã làm?</th>
+          <th>Việc cần kiểm tra</th>
+        </tr>
+        <tr>
+          <td>☐</td>
+          <td>Đã mở terminal đúng thư mục dự án.</td>
+        </tr>
+        <tr>
+          <td>☐</td>
+          <td>Đã chạy Claude CLI trong thư mục dự án.</td>
+        </tr>
+        <tr>
+          <td>☐</td>
+          <td>Nếu chưa rõ dự án, đã dùng <code>/opsx:explore</code>.</td>
+        </tr>
+        <tr>
+          <td>☐</td>
+          <td>Đã dùng <code>/opsx:propose</code> cho thay đổi lớn.</td>
+        </tr>
+        <tr>
+          <td>☐</td>
+          <td>Đã đọc lại proposal/design/tasks trước khi code.</td>
+        </tr>
+        <tr>
+          <td>☐</td>
+          <td>Đã dùng <code>/opsx:apply</code> sau khi kế hoạch đúng.</td>
+        </tr>
+        <tr>
+          <td>☐</td>
+          <td>Đã yêu cầu Claude chạy test/lint/build nếu có.</td>
+        </tr>
+        <tr>
+          <td>☐</td>
+          <td>Đã dùng <code>/opsx:verify</code> nếu workflow hỗ trợ.</td>
+        </tr>
+        <tr>
+          <td>☐</td>
+          <td>Đã dùng <code>/opsx:archive</code> khi hoàn tất.</td>
+        </tr>
+      </table>
+
+      <div class="box good">
+        <strong>Quy tắc vàng:</strong> Việc nhỏ có thể nhờ Claude sửa trực tiếp. Việc lớn nên đi qua OpenSpec để có kế hoạch, task và lịch sử rõ ràng.
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Tài liệu HTML tự chứa, có thể mở trực tiếp bằng trình duyệt. Dành cho người dùng Claude CLI muốn dùng OpenSpec an toàn và dễ hiểu hơn.
+  </footer>
+</body>
+</html>
