@@ -1,2 +1,6 @@
 # Claude local settings
 .claude/
+
+# Local temp/debug files
+_*.py
+temp_*.txt

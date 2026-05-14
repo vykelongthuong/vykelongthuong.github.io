@@ -112,6 +112,124 @@
     };
   }
 
+  function slugify(text) {
+    return String(text || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+  }
+
+  function ensureUniqueId(base, used) {
+    let next = base || 'section';
+    let index = 1;
+    while (used.has(next) || document.getElementById(next)) {
+      next = (base || 'section') + '-' + index;
+      index += 1;
+    }
+    used.add(next);
+    return next;
+  }
+
+  function getDocDisplayTitle() {
+    const title = (document.title || '').trim();
+    return title || 'Tài liệu';
+  }
+
+  function injectDocEnhancementStyles() {
+    if (document.getElementById('dochub-auto-enhance-style')) return;
+    const style = document.createElement('style');
+    style.id = 'dochub-auto-enhance-style';
+    style.textContent = [
+      '.dochub-breadcrumb{margin:0 0 14px;padding:10px 14px;border:1px solid var(--border,#dbe3ef);border-radius:12px;background:var(--panel,#fff);font-size:14px;color:var(--muted,#6b7280);}',
+      '.dochub-breadcrumb a{color:var(--primary,#2563eb);text-decoration:none;}',
+      '.dochub-breadcrumb a:hover{text-decoration:underline;}',
+      '.dochub-auto-toc{margin:0 0 18px;padding:16px;border:1px solid var(--border,#dbe3ef);border-radius:14px;background:var(--panel,#fff);}',
+      '.dochub-auto-toc h2{margin:0 0 12px;font-size:18px;line-height:1.2;}',
+      '.dochub-auto-toc ul{list-style:none;padding:0;margin:0;display:grid;gap:8px;}',
+      '.dochub-auto-toc li{margin:0;}',
+      '.dochub-auto-toc a{display:block;padding:8px 10px;border:1px solid var(--border,#dbe3ef);border-radius:10px;color:var(--text,#1f2937);text-decoration:none;background:var(--panel-2,#f8fafc);}',
+      '.dochub-auto-toc a:hover{border-color:var(--primary,#2563eb);color:var(--primary,#2563eb);}',
+      '.dochub-auto-toc .toc-sub{padding-left:14px;}'
+    ].join('');
+    document.head.appendChild(style);
+  }
+
+  function buildBreadcrumb(target) {
+    if (!target || document.querySelector('.dochub-breadcrumb')) return;
+    const breadcrumb = document.createElement('div');
+    breadcrumb.className = 'dochub-breadcrumb';
+    breadcrumb.setAttribute('aria-label', 'Breadcrumb');
+    const current = escapeHtml(getDocDisplayTitle());
+    breadcrumb.innerHTML = '<a href="../index.html">Kho Tài Liệu</a> <span>/</span> <span>' + current + '</span>';
+    target.prepend(breadcrumb);
+  }
+
+  function findContentRoot() {
+    return document.querySelector('main') || document.querySelector('article') || document.querySelector('.container') || document.body;
+  }
+
+  function shouldSkipAutoToc() {
+    if (document.querySelector('#toc')) return true;
+    if (document.querySelector('nav .toc, .toc, [data-dochub-toc]')) return true;
+    return false;
+  }
+
+  function buildAutoToc(target) {
+    if (!target || document.querySelector('.dochub-auto-toc')) return;
+    if (shouldSkipAutoToc()) return;
+    const headings = Array.from(target.querySelectorAll('h2, h3')).filter((heading) => {
+      if (!heading.textContent || !heading.textContent.trim()) return false;
+      const inside = heading.closest('nav, aside, header, footer, .dochub-auto-toc, .dochub-breadcrumb');
+      return !inside;
+    });
+    if (headings.length < 3) return;
+
+    const used = new Set();
+    const list = document.createElement('ul');
+    headings.forEach((heading) => {
+      const baseId = slugify(heading.textContent);
+      const finalId = heading.id || ensureUniqueId(baseId, used);
+      heading.id = finalId;
+
+      const item = document.createElement('li');
+      if (heading.tagName.toLowerCase() === 'h3') item.className = 'toc-sub';
+      const link = document.createElement('a');
+      link.href = '#' + finalId;
+      link.textContent = heading.textContent.trim();
+      item.appendChild(link);
+      list.appendChild(item);
+    });
+
+    const box = document.createElement('section');
+    box.className = 'dochub-auto-toc';
+    box.setAttribute('data-dochub-toc', 'true');
+    const title = document.createElement('h2');
+    title.textContent = 'Mục lục';
+    box.appendChild(title);
+    box.appendChild(list);
+    const firstSection = target.querySelector('section');
+    if (firstSection) {
+      target.insertBefore(box, firstSection);
+      return;
+    }
+    target.appendChild(box);
+  }
+
+  function initDocAutoEnhancements() {
+    if (!window.location.pathname.includes('/docs/')) return;
+    const root = findContentRoot();
+    if (!root) return;
+    injectDocEnhancementStyles();
+    buildBreadcrumb(root);
+    buildAutoToc(root);
+  }
+
+  document.addEventListener('DOMContentLoaded', initDocAutoEnhancements);
+
   window.DocHub = {
     STORAGE_KEYS,
     Store,
@@ -122,6 +240,7 @@
     relativeTime,
     escapeHtml,
     unique,
-    debounce
+    debounce,
+    initDocAutoEnhancements
   };
 })();

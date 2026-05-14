@@ -55,6 +55,17 @@ window.DOCS = [
     readingTime: '2 phút'
   },
   {
+    id: 'gpt55-capability-probe',
+    title: 'GPT-5.5 Capability Probe',
+    description: 'Công cụ kiểm thử black-box cho API tương thích OpenAI: endpoint, reasoning, structured output, tool calling, Unicode, long-context và vision.',
+    file: 'docs/GPT55-CAPABILITY-PROBE.html',
+    tags: ['Tool', 'AI', 'API', 'Benchmark', 'GPT-5.5'],
+    updatedAt: '2026-05-15',
+    category: 'Công cụ AI',
+    level: 'Advanced',
+    readingTime: '5 phút'
+  },
+  {
     id: 'openspec-guide',
     title: 'Hướng dẫn OpenSpec với Claude CLI cho người mới',
     description: 'Tài liệu tiếng Việt dễ hiểu về OpenSpec: từ cài đặt, quy trình làm việc, trọn bộ lệnh /opsx, đến ví dụ thực tế và checklist hằng ngày.',
