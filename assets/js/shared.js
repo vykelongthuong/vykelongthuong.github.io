@@ -221,6 +221,7 @@
 
   function initDocAutoEnhancements() {
     if (!window.location.pathname.includes('/docs/')) return;
+    if (document.body && document.body.dataset.dochubEnhance === 'skip') return;
     const root = findContentRoot();
     if (!root) return;
     injectDocEnhancementStyles();

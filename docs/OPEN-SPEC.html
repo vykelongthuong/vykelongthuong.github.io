@@ -25,6 +25,60 @@
       --info-border: #3b82f6;
       --danger-bg: #fef2f2;
       --danger-border: #ef4444;
+      --heading-color: #111827;
+      --heading-border: #eef2ff;
+      --h3-color: #1f2937;
+      --toc-bg: #f8fafc;
+      --toc-color: #1f2937;
+      --code-inline-bg: #eef2ff;
+      --code-inline-color: #1e3a8a;
+      --th-bg: #eef2ff;
+      --th-color: #111827;
+      --stripe-bg: #f8fafc;
+      --step-bg: #f8fafc;
+      --step-border: var(--border);
+      --badge-bg: #dbeafe;
+      --badge-color: #1e40af;
+      --flow-bg: #eef2ff;
+      --flow-border: #c7d2fe;
+      --header-bg: linear-gradient(135deg, #1d4ed8, #7c3aed);
+    }
+
+    [data-theme="dark"] {
+      --bg: #0f1220;
+      --card: #171b2d;
+      --text: #eef2ff;
+      --muted: #a7b0c6;
+      --primary: #8b8bff;
+      --primary-dark: #6d6dff;
+      --border: #2d354d;
+      --code-bg: #050816;
+      --code-text: #f8fafc;
+      --good-bg: rgba(16, 185, 129, 0.12);
+      --good-border: #34d399;
+      --warn-bg: rgba(251, 191, 36, 0.12);
+      --warn-border: #fb923c;
+      --info-bg: rgba(59, 130, 246, 0.12);
+      --info-border: #60a5fa;
+      --danger-bg: rgba(239, 68, 68, 0.12);
+      --danger-border: #f87171;
+      --heading-color: #eef2ff;
+      --heading-border: #2d354d;
+      --h3-color: #eef2ff;
+      --toc-bg: #20263a;
+      --toc-color: #eef2ff;
+      --code-inline-bg: #2d354d;
+      --code-inline-color: #cbd5e1;
+      --th-bg: #20263a;
+      --th-color: #eef2ff;
+      --stripe-bg: #20263a;
+      --step-bg: #20263a;
+      --step-border: var(--border);
+      --badge-bg: #2d354d;
+      --badge-color: #cbd5e1;
+      --flow-bg: #20263a;
+      --flow-border: #3a4566;
+      --header-bg: linear-gradient(135deg, #0f1220, #1a2140);
     }
 
     * { box-sizing: border-box; }
@@ -38,10 +92,51 @@
     }
 
     header {
-      background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+      background: var(--header-bg);
       color: #fff;
       padding: 42px 22px;
       text-align: center;
+    }
+
+    .head-wrap {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    .head-wrap .text { flex: 1; text-align: center; }
+
+    .theme-btn {
+      flex-shrink: 0;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      margin-top: 4px;
+    }
+
+    .theme-btn:hover {
+      background: rgba(255,255,255,0.25);
+      border-color: rgba(255,255,255,0.5);
+    }
+
+    [data-theme="dark"] .theme-btn {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.15);
+    }
+
+    [data-theme="dark"] .theme-btn:hover {
+      background: rgba(255,255,255,0.15);
+      border-color: rgba(255,255,255,0.3);
     }
 
     header h1 {
@@ -74,15 +169,15 @@
 
     h2 {
       margin-top: 0;
-      color: #111827;
+      color: var(--heading-color);
       font-size: 28px;
-      border-bottom: 2px solid #eef2ff;
+      border-bottom: 2px solid var(--heading-border);
       padding-bottom: 8px;
     }
 
     h3 {
       margin-top: 28px;
-      color: #1f2937;
+      color: var(--h3-color);
       font-size: 22px;
     }
 
@@ -106,10 +201,10 @@
     .toc li a {
       display: block;
       padding: 12px 14px;
-      background: #f8fafc;
+      background: var(--toc-bg);
       border: 1px solid var(--border);
       border-radius: 12px;
-      color: #1f2937;
+      color: var(--toc-color);
       font-weight: 700;
     }
 
@@ -127,8 +222,8 @@
 
     code {
       font-family: Consolas, Monaco, 'Courier New', monospace;
-      background: #eef2ff;
-      color: #1e3a8a;
+      background: var(--code-inline-bg);
+      color: var(--code-inline-color);
       border-radius: 6px;
       padding: 2px 6px;
       font-size: 0.95em;
@@ -167,11 +262,11 @@
     }
 
     th {
-      background: #eef2ff;
-      color: #111827;
+      background: var(--th-bg);
+      color: var(--th-color);
     }
 
-    tr:nth-child(even) td { background: #f8fafc; }
+    tr:nth-child(even) td { background: var(--stripe-bg); }
 
     .step {
       display: grid;
@@ -195,8 +290,8 @@
     }
 
     .step-content {
-      background: #f8fafc;
-      border: 1px solid var(--border);
+      background: var(--step-bg);
+      border: 1px solid var(--step-border);
       border-radius: 14px;
       padding: 16px;
     }
@@ -206,7 +301,7 @@
       border-radius: 16px;
       padding: 18px;
       margin: 14px 0;
-      background: #fff;
+      background: var(--card);
     }
 
     .command-card h4 {
@@ -217,8 +312,8 @@
     .badge {
       display: inline-block;
       font-size: 12px;
-      background: #dbeafe;
-      color: #1e40af;
+      background: var(--badge-bg);
+      color: var(--badge-color);
       padding: 3px 8px;
       border-radius: 999px;
       font-weight: bold;
@@ -234,8 +329,8 @@
     }
 
     .flow span {
-      background: #eef2ff;
-      border: 1px solid #c7d2fe;
+      background: var(--flow-bg);
+      border: 1px solid var(--flow-border);
       padding: 10px 12px;
       border-radius: 999px;
       font-weight: 700;
@@ -253,15 +348,20 @@
     @media print {
       body { background: #fff; }
       nav, section { box-shadow: none; break-inside: avoid; }
-      header { background: #1d4ed8; }
+      header { background: var(--primary-dark); }
       a { color: #111827; }
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Hướng dẫn OpenSpec với Claude CLI</h1>
-    <p>Bản dễ hiểu cho người mới bắt đầu, kể cả người chưa biết lập trình. Tài liệu này giải thích OpenSpec dùng để làm gì, gõ lệnh ở đâu, từng lệnh có ý nghĩa gì và cách dùng trong một dự án thật.</p>
+    <div class="head-wrap">
+      <div class="text">
+        <h1>Hướng dẫn OpenSpec với Claude CLI</h1>
+        <p>Bản dễ hiểu cho người mới bắt đầu, kể cả người chưa biết lập trình. Tài liệu này giải thích OpenSpec dùng để làm gì, gõ lệnh ở đâu, từng lệnh có ý nghĩa gì và cách dùng trong một dự án thật.</p>
+      </div>
+      <button id="themeBtn" type="button" class="theme-btn">Đổi theme</button>
+    </div>
   </header>
 
   <main>
@@ -805,5 +905,14 @@ openspec list</code></pre>
   <footer>
     Tài liệu HTML tự chứa, có thể mở trực tiếp bằng trình duyệt. Dành cho người dùng Claude CLI muốn dùng OpenSpec an toàn và dễ hiểu hơn.
   </footer>
+
+  <script>
+    (function () {
+      'use strict';
+      if (window.DocHub) {
+        window.DocHub.initTheme([document.getElementById('themeBtn')]);
+      }
+    })();
+  </script>
 </body>
 </html>
